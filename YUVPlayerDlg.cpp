@@ -63,6 +63,8 @@ BEGIN_MESSAGE_MAP(CYUVPlayerDlg, CDialogEx)
 	ON_WM_SYSCOMMAND()
 	ON_WM_PAINT()
 	ON_WM_QUERYDRAGICON()
+    ON_COMMAND(ID_HELP_ABOUT, &CYUVPlayerDlg::OnHelpAbout)
+    ON_WM_CTLCOLOR()
 END_MESSAGE_MAP()
 
 
@@ -100,7 +102,16 @@ BOOL CYUVPlayerDlg::OnInitDialog()
 	ShowWindow(SW_MINIMIZE);
 
 	// TODO: 在此添加额外的初始化代码
-
+    //picture控件背景色
+#if 0
+    CWnd *pWnd = GetDlgItem(IDC_VIDEO);
+    CRect rect;
+    pWnd->GetClientRect(&rect);
+    int with = rect.Width();
+    FillRect(pWnd->GetDC()->GetSafeHdc(), &rect, 
+        CBrush(RGB(0,0,0)));
+    Invalidate();
+#endif`
 	return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
 }
 
@@ -153,3 +164,27 @@ HCURSOR CYUVPlayerDlg::OnQueryDragIcon()
 	return static_cast<HCURSOR>(m_hIcon);
 }
 
+
+
+void CYUVPlayerDlg::OnHelpAbout()
+{
+    // TODO: 在此添加命令处理程序代码
+    CAboutDlg dlgAbout;
+    dlgAbout.DoModal();
+}
+
+
+HBRUSH CYUVPlayerDlg::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
+{
+    if (pWnd->GetDlgCtrlID() == IDC_VIDEO && nCtlColor == CTLCOLOR_STATIC)
+    {
+        pDC->SetBkColor(RGB(255, 0, 0));
+    }
+
+    HBRUSH hbr = CDialogEx::OnCtlColor(pDC, pWnd, nCtlColor);
+
+    // TODO:  在此更改 DC 的任何特性
+
+    // TODO:  如果默认的不是所需画笔，则返回另一个画笔
+    return hbr;
+}

@@ -95,6 +95,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <None Include="ReadMe.txt" />
+    <None Include="res\icon1.ico" />
     <None Include="res\YUVPlayer.ico" />
     <None Include="res\YUVPlayer.rc2" />
   </ItemGroup>
@@ -119,4 +120,9 @@
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
+  <ProjectExtensions>
+    <VisualStudio>
+      <UserProperties RESOURCE_FILE="YUVPlayer.rc" />
+    </VisualStudio>
+  </ProjectExtensions>
 </Project>

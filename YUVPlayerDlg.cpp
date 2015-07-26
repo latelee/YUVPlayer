@@ -114,7 +114,7 @@ BOOL CYUVPlayerDlg::OnInitDialog()
 	SetIcon(m_hIcon, FALSE);		// 设置小图标
 
     
-	//ShowWindow(SW_MINIMIZE);
+	//ShowWindow(SW_MINIMIZE); // 不要最小化窗口
 
 	// TODO: 在此添加额外的初始化代码
     if (m_pSettingDlg == NULL)
@@ -123,16 +123,7 @@ BOOL CYUVPlayerDlg::OnInitDialog()
         m_pSettingDlg->Create(IDD_DIALOG_SETTING, this);
         m_pSettingDlg->m_pParentWnd = this;
     }
-#if 0
-    //picture控件背景色
-    CWnd *pWnd = GetDlgItem(IDC_VIDEO);
-    CRect rect;
-    pWnd->GetClientRect(&rect);
-    int with = rect.Width();
-    FillRect(pWnd->GetDC()->GetSafeHdc(), &rect, 
-        CBrush(RGB(0,0,0)));
-    Invalidate();
-#endif`
+
 	return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
 }
 
@@ -155,14 +146,14 @@ void CYUVPlayerDlg::OnSysCommand(UINT nID, LPARAM lParam)
 
 void CYUVPlayerDlg::OnPaint()
 {
-#if 0
-    CRect rtTop1;
+    //picture控件背景色为黑色
+    CRect rtTop;
     CStatic *pWnd = (CStatic*)GetDlgItem(IDC_VIDEO);
     CDC *cDc = pWnd->GetDC();
-    pWnd->GetClientRect(&rtTop1);
-    cDc->FillSolidRect(rtTop1.left+1, rtTop1.top+1,
-        rtTop1.Width()-2, rtTop1.Height()-2,RGB(0,0,0));
-#endif
+    pWnd->GetClientRect(&rtTop);
+    cDc->FillSolidRect(rtTop.left, rtTop.top, rtTop.Width(), rtTop.Height(),RGB(0,0,0));
+    Invalidate(FALSE);
+
 
 	if (IsIconic())
 	{

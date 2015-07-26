@@ -19,3 +19,5 @@ Debug/
 *.suo
 *.ncb
 *.user
+*.gch
+*.pch

@@ -52,6 +52,16 @@ CYUVPlayerDlg::CYUVPlayerDlg(CWnd* pParent /*=NULL*/)
 	: CDialogEx(CYUVPlayerDlg::IDD, pParent)
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
+    m_pSettingDlg = NULL;
+}
+
+CYUVPlayerDlg::~CYUVPlayerDlg()
+{
+    if (m_pSettingDlg != NULL)
+    {
+        delete m_pSettingDlg;
+        m_pSettingDlg = NULL;
+    }
 }
 
 void CYUVPlayerDlg::DoDataExchange(CDataExchange* pDX)
@@ -65,6 +75,10 @@ BEGIN_MESSAGE_MAP(CYUVPlayerDlg, CDialogEx)
 	ON_WM_QUERYDRAGICON()
     ON_COMMAND(ID_HELP_ABOUT, &CYUVPlayerDlg::OnHelpAbout)
     ON_WM_CTLCOLOR()
+    ON_BN_CLICKED(IDC_BUTTON_SET, &CYUVPlayerDlg::OnBnClickedButtonSet)
+    ON_BN_CLICKED(IDC_BUTTON_OPEN, &CYUVPlayerDlg::OnBnClickedButtonOpen)
+    ON_BN_CLICKED(IDC_BUTTON_SAVE, &CYUVPlayerDlg::OnBnClickedButtonSave)
+    ON_BN_CLICKED(IDC_BUTTON_PLAY, &CYUVPlayerDlg::OnBnClickedButtonPlay)
 END_MESSAGE_MAP()
 
 
@@ -99,11 +113,18 @@ BOOL CYUVPlayerDlg::OnInitDialog()
 	SetIcon(m_hIcon, TRUE);			// 设置大图标
 	SetIcon(m_hIcon, FALSE);		// 设置小图标
 
-	ShowWindow(SW_MINIMIZE);
+    
+	//ShowWindow(SW_MINIMIZE);
 
 	// TODO: 在此添加额外的初始化代码
-    //picture控件背景色
+    if (m_pSettingDlg == NULL)
+    {
+        m_pSettingDlg = new CSettingDlg();
+        m_pSettingDlg->Create(IDD_DIALOG_SETTING, this);
+        m_pSettingDlg->m_pParentWnd = this;
+    }
 #if 0
+    //picture控件背景色
     CWnd *pWnd = GetDlgItem(IDC_VIDEO);
     CRect rect;
     pWnd->GetClientRect(&rect);
@@ -134,6 +155,15 @@ void CYUVPlayerDlg::OnSysCommand(UINT nID, LPARAM lParam)
 
 void CYUVPlayerDlg::OnPaint()
 {
+#if 0
+    CRect rtTop1;
+    CStatic *pWnd = (CStatic*)GetDlgItem(IDC_VIDEO);
+    CDC *cDc = pWnd->GetDC();
+    pWnd->GetClientRect(&rtTop1);
+    cDc->FillSolidRect(rtTop1.left+1, rtTop1.top+1,
+        rtTop1.Width()-2, rtTop1.Height()-2,RGB(0,0,0));
+#endif
+
 	if (IsIconic())
 	{
 		CPaintDC dc(this); // 用于绘制的设备上下文
@@ -149,7 +179,7 @@ void CYUVPlayerDlg::OnPaint()
 		int y = (rect.Height() - cyIcon + 1) / 2;
 
 		// 绘制图标
-		dc.DrawIcon(x, y, m_hIcon);
+        dc.DrawIcon(x, y, m_hIcon);
 	}
 	else
 	{
@@ -173,12 +203,12 @@ void CYUVPlayerDlg::OnHelpAbout()
     dlgAbout.DoModal();
 }
 
-
+// 不成功
 HBRUSH CYUVPlayerDlg::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
 {
     if (pWnd->GetDlgCtrlID() == IDC_VIDEO && nCtlColor == CTLCOLOR_STATIC)
     {
-        pDC->SetBkColor(RGB(255, 0, 0));
+        pDC->SetBkColor(RGB(0, 0, 0));
     }
 
     HBRUSH hbr = CDialogEx::OnCtlColor(pDC, pWnd, nCtlColor);
@@ -187,4 +217,39 @@ HBRUSH CYUVPlayerDlg::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
 
     // TODO:  如果默认的不是所需画笔，则返回另一个画笔
     return hbr;
+}
+
+
+void CYUVPlayerDlg::OnBnClickedButtonSet()
+{
+    // TODO: 在此添加控件通知处理程序代码
+    // 非模态对话框
+    if (m_pSettingDlg == NULL)
+    {
+        m_pSettingDlg = new CSettingDlg();
+        m_pSettingDlg->Create(IDD_DIALOG_SETTING, this);
+    }
+    m_pSettingDlg->ShowWindow(SW_SHOW);
+}
+
+
+void CYUVPlayerDlg::OnBnClickedButtonOpen()
+{
+    // TODO: 在此添加控件通知处理程序代码
+
+    int aa =  m_nWidth;
+
+    return;
+}
+
+
+void CYUVPlayerDlg::OnBnClickedButtonSave()
+{
+    // TODO: 在此添加控件通知处理程序代码
+}
+
+
+void CYUVPlayerDlg::OnBnClickedButtonPlay()
+{
+    // TODO: 在此添加控件通知处理程序代码
 }

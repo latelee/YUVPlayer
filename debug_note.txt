@@ -1,2 +1,30 @@
 OpenMutex返回0？？？
 -->没有Create....
+
+模拟YUV Player Deluxe播放器
+
+菜单
+设置框
+滚动条
+图标
+快捷键
+缩放
+YUV 分量
+
+==================================
+非模态对话框创建、传值
+
+==================================
+
+wchar和char的区别
+不能使用sscanf，字符串要用_T()
+
+==================================
+保存用户输入的参数
+写注册表
+AddedSizes
+CurrentPixelFormat
+FrameWidth
+FrameHeight
+FrameRate
+Loop

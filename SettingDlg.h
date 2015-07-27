@@ -16,7 +16,28 @@ public:
 	enum { IDD = IDD_DIALOG_SETTING };
 
 public:
+    void SetParentWnd(CYUVPlayerDlg* pWnd) {m_pParentWnd = pWnd;}
+
+    void SetParameters(CString& strSize, int width, int height, int fpsidx, int fmt, BOOL loop)
+    {
+        m_strAddedSize = strSize;
+        m_nWidth = width;
+        m_nHeight = height;
+        m_nFpsIndex = fpsidx;
+        m_nYuvFormat = fmt;
+        m_fLoop = loop;
+        
+        //UpdateWindow(FALSE);
+    }
+
+    void SetRegistration(CString& strSize, int width, int height, int fpsidx, int fmt, int loop);
+    void GetRegistration(CString& strSize, int& width, int& height, int& fpsidx, int& fmt, int& loop);
+    BOOL ExistRegistration();
+
+private:
     CYUVPlayerDlg *m_pParentWnd; // 窗口参数传递
+    CString m_strAddedSize;   // 用户自定义的分辨率(含系统已有的)
+    int m_nFpsIndex;
 
 protected:
 	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV 支持
@@ -41,4 +62,6 @@ public:
     afx_msg void OnClickedCkLoop();
     afx_msg void OnChangeEWidth();
     afx_msg void OnChangeEHeight();
+    afx_msg void OnBnClickedBtAdd();
+    afx_msg void OnBnClickedBtDel();
 };

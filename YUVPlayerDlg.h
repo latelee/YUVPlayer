@@ -28,7 +28,7 @@ private:
     BOOL m_fLoop;
 
 public:
-    void SetParameters(int width, int height, int fps, int fmt, BOOL loop)
+    void GetParameters(int width, int height, int fps, int fmt, BOOL loop)
     {
         m_nWidth = width;
         m_nHeight = height;
@@ -36,6 +36,8 @@ public:
         m_nYuvFormat = fmt;
         m_fLoop = loop;
     }
+
+    void ShowSettingWindow();
 
 // й╣ож
 protected:
@@ -49,7 +51,6 @@ protected:
 	DECLARE_MESSAGE_MAP()
 public:
     afx_msg void OnHelpAbout();
-    afx_msg HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
     afx_msg void OnBnClickedButtonSet();
     afx_msg void OnBnClickedButtonOpen();
     afx_msg void OnBnClickedButtonSave();

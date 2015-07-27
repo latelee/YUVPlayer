@@ -81,7 +81,6 @@ BEGIN_MESSAGE_MAP(CYUVPlayerDlg, CDialogEx)
     ON_BN_CLICKED(IDC_BUTTON_PLAY, &CYUVPlayerDlg::OnBnClickedButtonPlay)
 END_MESSAGE_MAP()
 
-
 // CYUVPlayerDlg 消息处理程序
 
 BOOL CYUVPlayerDlg::OnInitDialog()
@@ -121,7 +120,7 @@ BOOL CYUVPlayerDlg::OnInitDialog()
     {
         m_pSettingDlg = new CSettingDlg();
         m_pSettingDlg->Create(IDD_DIALOG_SETTING, this);
-        m_pSettingDlg->m_pParentWnd = this;
+        m_pSettingDlg->SetParentWnd(this);
     }
 
 	return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
@@ -185,7 +184,18 @@ HCURSOR CYUVPlayerDlg::OnQueryDragIcon()
 	return static_cast<HCURSOR>(m_hIcon);
 }
 
+void CYUVPlayerDlg::ShowSettingWindow()
+{
+    // 非模态对话框
+    if (m_pSettingDlg == NULL)
+    {
+        m_pSettingDlg = new CSettingDlg();
+        m_pSettingDlg->Create(IDD_DIALOG_SETTING, this);
+    }
 
+    m_pSettingDlg->ShowWindow(SW_SHOW);
+    //m_pParentWnd->CenterWindow(this);
+}
 
 void CYUVPlayerDlg::OnHelpAbout()
 {
@@ -194,33 +204,9 @@ void CYUVPlayerDlg::OnHelpAbout()
     dlgAbout.DoModal();
 }
 
-// 不成功
-HBRUSH CYUVPlayerDlg::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
-{
-    if (pWnd->GetDlgCtrlID() == IDC_VIDEO && nCtlColor == CTLCOLOR_STATIC)
-    {
-        pDC->SetBkColor(RGB(0, 0, 0));
-    }
-
-    HBRUSH hbr = CDialogEx::OnCtlColor(pDC, pWnd, nCtlColor);
-
-    // TODO:  在此更改 DC 的任何特性
-
-    // TODO:  如果默认的不是所需画笔，则返回另一个画笔
-    return hbr;
-}
-
-
 void CYUVPlayerDlg::OnBnClickedButtonSet()
 {
-    // TODO: 在此添加控件通知处理程序代码
-    // 非模态对话框
-    if (m_pSettingDlg == NULL)
-    {
-        m_pSettingDlg = new CSettingDlg();
-        m_pSettingDlg->Create(IDD_DIALOG_SETTING, this);
-    }
-    m_pSettingDlg->ShowWindow(SW_SHOW);
+    ShowSettingWindow();
 }
 
 

@@ -38,6 +38,7 @@ private:
     CYUVPlayerDlg *m_pParentWnd; // 窗口参数传递
     CString m_strAddedSize;   // 用户自定义的分辨率(含系统已有的)
     int m_nFpsIndex;
+    CStringArray m_strArrAddedSize;
 
 protected:
 	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV 支持

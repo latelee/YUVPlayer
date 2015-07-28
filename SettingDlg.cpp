@@ -161,6 +161,7 @@ BOOL CSettingDlg::OnInitDialog()
 
     // TODO:  使用注册表里的值
     // 
+    CString strTemp;
 
     // default
     if (!ExistRegistration())
@@ -175,18 +176,40 @@ BOOL CSettingDlg::OnInitDialog()
     strMsg.Format(_T("%s %d %d %d %d %d"), m_strAddedSize, m_nWidth, m_nHeight, m_nFpsIndex, m_nYuvFormat, m_fLoop);
     MessageBox(strMsg);
 #endif
+
+    int pos = 0;  
+    strTemp = m_strAddedSize.Tokenize(_T(";"), pos);
+    m_strArrAddedSize.Add(strTemp);
+    while (strTemp != _T(""))
+    {
+        strTemp = m_strAddedSize.Tokenize(_T(";"), pos);
+        m_strArrAddedSize.Add(strTemp);
+    }
+
+    int nResolutionIdx = -1;
+    for (int i = 0; i < m_strArrAddedSize.GetCount()-1; i++)
+    {
+        m_cbResolution.AddString(m_strArrAddedSize[i]);
+        int width = 0;
+        int height = 0;
+        swscanf_s(m_strArrAddedSize[i].GetBuffer(), _T("%dx%d"), &width, &height);
+        if (width == m_nWidth && height == m_nHeight)
+            nResolutionIdx = i;
+    }
+
+#if 0
     m_cbResolution.AddString(_T("160x120"));
     m_cbResolution.AddString(_T("176x174"));
     m_cbResolution.AddString(_T("320x240"));
     m_cbResolution.AddString(_T("352x288"));
     m_cbResolution.AddString(_T("640x480"));
     m_cbResolution.AddString(_T("704x576"));
+#endif
 
     m_cbYuvFormat.SetCurSel(0);
-    m_cbFps.SetCurSel(7);
-    m_cbResolution.SetCurSel(2);
+    m_cbFps.SetCurSel(m_nFpsIndex);
+    m_cbResolution.SetCurSel(nResolutionIdx);
     m_nYuvFormat = m_cbYuvFormat.GetCurSel();
-    CString strTemp;
     m_cbResolution.GetWindowText(strTemp);
     //swscanf_s(strTemp.GetBuffer(), _T("%dx%d"), &m_nWidth, &m_nHeight);
     m_cbFps.GetWindowText(strTemp);
@@ -204,6 +227,18 @@ BOOL CSettingDlg::OnInitDialog()
 void CSettingDlg::OnBnClickedApply()
 {
     // TODO: 在此添加控件通知处理程序代码
+    UpdateData();
+    int nResolutionIdx = -1;
+    for (int i = 0; i < m_strArrAddedSize.GetCount()-1; i++)
+    {
+        int width = 0;
+        int height = 0;
+        swscanf_s(m_strArrAddedSize[i].GetBuffer(), _T("%dx%d"), &width, &height);
+        if (width == m_nWidth && height == m_nHeight)
+            nResolutionIdx = i;
+    }
+
+    m_cbResolution.SetCurSel(nResolutionIdx);
 
     m_pParentWnd->GetParameters(m_nWidth, m_nHeight, m_nFps, m_nYuvFormat, m_fLoop);
 

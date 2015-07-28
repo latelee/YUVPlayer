@@ -50,9 +50,28 @@ protected:
 	afx_msg HCURSOR OnQueryDragIcon();
 	DECLARE_MESSAGE_MAP()
 public:
-    afx_msg void OnHelpAbout();
     afx_msg void OnBnClickedButtonSet();
     afx_msg void OnBnClickedButtonOpen();
     afx_msg void OnBnClickedButtonSave();
     afx_msg void OnBnClickedButtonPlay();
+    afx_msg LRESULT OnNcHitTest(CPoint point);
+    afx_msg void OnContextMenu(CWnd* /*pWnd*/, CPoint /*point*/);
+
+    afx_msg void OnFileOpen();
+    afx_msg void OnFileClose();
+    afx_msg void OnFileSave();
+    afx_msg void OnFileExit();
+    afx_msg void OnPlayingPlay();
+    afx_msg void OnPlayingSetting();
+    afx_msg void OnPlayingStop();
+    afx_msg void OnHelpHelp();
+    afx_msg void OnHelpAbout();
+    afx_msg void OnROpen();
+    afx_msg void OnRSetting();
+    afx_msg void OnRExit();
+    afx_msg void OnBnClickedButtonStop();
+    afx_msg void OnBnClickedButtonPrev();
+    afx_msg void OnBnClickedButtonNext();
+    afx_msg void OnBnClickedButtonFirst();
+    afx_msg void OnBnClickedButtonLast();
 };

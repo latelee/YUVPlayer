@@ -28,3 +28,5 @@ FrameWidth
 FrameHeight
 FrameRate
 Loop
+
+¿ì½Ý¼ü

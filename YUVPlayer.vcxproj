@@ -95,7 +95,6 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <None Include="ReadMe.txt" />
-    <None Include="res\icon1.ico" />
     <None Include="res\YUVPlayer.ico" />
     <None Include="res\YUVPlayer.rc2" />
   </ItemGroup>

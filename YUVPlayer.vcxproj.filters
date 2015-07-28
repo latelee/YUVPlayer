@@ -22,9 +22,6 @@
     <None Include="res\YUVPlayer.ico">
       <Filter>资源文件</Filter>
     </None>
-    <None Include="res\icon1.ico">
-      <Filter>资源文件</Filter>
-    </None>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="YUVPlayer.h">

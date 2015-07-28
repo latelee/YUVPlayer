@@ -74,4 +74,5 @@ public:
     afx_msg void OnBnClickedButtonNext();
     afx_msg void OnBnClickedButtonFirst();
     afx_msg void OnBnClickedButtonLast();
+    afx_msg void OnSize(UINT nType, int cx, int cy);
 };

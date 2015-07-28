@@ -97,6 +97,7 @@ BEGIN_MESSAGE_MAP(CYUVPlayerDlg, CDialogEx)
     ON_BN_CLICKED(IDC_BUTTON_NEXT, &CYUVPlayerDlg::OnBnClickedButtonNext)
     ON_BN_CLICKED(IDC_BUTTON_FIRST, &CYUVPlayerDlg::OnBnClickedButtonFirst)
     ON_BN_CLICKED(IDC_BUTTON_LAST, &CYUVPlayerDlg::OnBnClickedButtonLast)
+    ON_WM_SIZE()
 END_MESSAGE_MAP()
 
 // CYUVPlayerDlg 消息处理程序
@@ -130,7 +131,7 @@ BOOL CYUVPlayerDlg::OnInitDialog()
 	SetIcon(m_hIcon, TRUE);			// 设置大图标
 	SetIcon(m_hIcon, FALSE);		// 设置小图标
 
-    
+
 	//ShowWindow(SW_MINIMIZE); // 不要最小化窗口
 
 	// TODO: 在此添加额外的初始化代码
@@ -141,6 +142,11 @@ BOOL CYUVPlayerDlg::OnInitDialog()
         m_pSettingDlg->SetParentWnd(this);
     }
 
+#if 0
+    CRect rect;
+    GetDlgItem(IDC_BUTTON_OPEN)->GetWindowRect(rect);
+    ScreenToClient(rect);
+#endif
 	return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
 }
 
@@ -236,14 +242,14 @@ void CYUVPlayerDlg::OnContextMenu(CWnd* pWnd, CPoint point)
     CMenu *pPopup;
     popMenu.LoadMenu(IDR_MENU2);
 
-    pPopup=popMenu.GetSubMenu(0); //获得子菜单指针
+    pPopup=popMenu.GetSubMenu(0);
 
-    pPopup->EnableMenuItem(ID_R_OPEN, MF_BYCOMMAND|MF_ENABLED); //允许菜单项使用
-    pPopup->EnableMenuItem(ID_R_SETTING, MF_BYCOMMAND|MF_ENABLED); //允许菜单项使用
-    pPopup->EnableMenuItem(ID_R_EXIT, MF_BYCOMMAND|MF_ENABLED); //允许菜单项使用
+    pPopup->EnableMenuItem(ID_R_OPEN, MF_BYCOMMAND|MF_ENABLED);
+    pPopup->EnableMenuItem(ID_R_SETTING, MF_BYCOMMAND|MF_ENABLED);
+    pPopup->EnableMenuItem(ID_R_EXIT, MF_BYCOMMAND|MF_ENABLED);
 
-    //pPopup->EnableMenuItem(ID_R_SETTING,MF_BYCOMMAND|MF_DISABLED|MF_GRAYED); //不允许菜单项使用
-    pPopup->TrackPopupMenu(TPM_LEFTALIGN|TPM_RIGHTBUTTON, point.x,point.y, this); //显示弹出菜单
+    //pPopup->EnableMenuItem(ID_R_SETTING,MF_BYCOMMAND|MF_DISABLED|MF_GRAYED);
+    pPopup->TrackPopupMenu(TPM_LEFTALIGN|TPM_RIGHTBUTTON, point.x,point.y, this);
     pPopup->Detach();
     popMenu.DestroyMenu();
 }
@@ -251,56 +257,56 @@ void CYUVPlayerDlg::OnContextMenu(CWnd* pWnd, CPoint point)
 /////////////////////////////////////////// ------> 标题菜单事件
 void CYUVPlayerDlg::OnFileOpen()
 {
-    // TODO: Add your command handler code here
+
 }
 
 
 void CYUVPlayerDlg::OnFileClose()
 {
-    // TODO: Add your command handler code here
+
 }
 
 
 void CYUVPlayerDlg::OnFileSave()
 {
-    // TODO: Add your command handler code here
+
 }
 
 
 void CYUVPlayerDlg::OnFileExit()
 {
-    // TODO: Add your command handler code here
+
 }
 
 
 void CYUVPlayerDlg::OnPlayingPlay()
 {
-    // TODO: Add your command handler code here
+
 }
 
 
 void CYUVPlayerDlg::OnPlayingSetting()
 {
-    // TODO: Add your command handler code here
+
 }
 
 
 void CYUVPlayerDlg::OnPlayingStop()
 {
-    // TODO: Add your command handler code here
+
 }
 
 
 void CYUVPlayerDlg::OnHelpHelp()
 {
-    // TODO: Add your command handler code here
+
     MessageBox(_T("Help me"));
 }
 
 
 void CYUVPlayerDlg::OnHelpAbout()
 {
-    // TODO: 在此添加命令处理程序代码
+
     CAboutDlg dlgAbout;
     dlgAbout.DoModal();
 }
@@ -309,19 +315,19 @@ void CYUVPlayerDlg::OnHelpAbout()
 /////////////////////////////////////////// ------> 右键菜单事件
 void CYUVPlayerDlg::OnROpen()
 {
-    // TODO: Add your command handler code here
+
 }
 
 
 void CYUVPlayerDlg::OnRSetting()
 {
-    // TODO: Add your command handler code here
+
 }
 
 
 void CYUVPlayerDlg::OnRExit()
 {
-    // TODO: Add your command handler code here
+
 }
 
 /////////////////////////////////////////// <------ 右键菜单事件
@@ -329,7 +335,7 @@ void CYUVPlayerDlg::OnRExit()
 /////////////////////////////////////////// ------> 单击按钮事件
 void CYUVPlayerDlg::OnBnClickedButtonOpen()
 {
-    // TODO: 在此添加控件通知处理程序代码
+
 
     int aa =  m_nWidth;
 
@@ -339,43 +345,43 @@ void CYUVPlayerDlg::OnBnClickedButtonOpen()
 
 void CYUVPlayerDlg::OnBnClickedButtonSave()
 {
-    // TODO: 在此添加控件通知处理程序代码
+
 }
 
 
 void CYUVPlayerDlg::OnBnClickedButtonPlay()
 {
-    // TODO: 在此添加控件通知处理程序代码
+
 }
 
 
 void CYUVPlayerDlg::OnBnClickedButtonStop()
 {
-    // TODO: Add your control notification handler code here
+
 }
 
 
 void CYUVPlayerDlg::OnBnClickedButtonPrev()
 {
-    // TODO: Add your control notification handler code here
+
 }
 
 
 void CYUVPlayerDlg::OnBnClickedButtonNext()
 {
-    // TODO: Add your control notification handler code here
+
 }
 
 
 void CYUVPlayerDlg::OnBnClickedButtonFirst()
 {
-    // TODO: Add your control notification handler code here
+
 }
 
 
 void CYUVPlayerDlg::OnBnClickedButtonLast()
 {
-    // TODO: Add your control notification handler code here
+
 }
 
 
@@ -389,3 +395,24 @@ void CYUVPlayerDlg::OnBnClickedButtonSet()
 /////////////////////////////////////////// ------> 键盘快捷键事件
 
 
+
+
+void CYUVPlayerDlg::OnSize(UINT nType, int cx, int cy)
+{
+    CDialogEx::OnSize(nType, cx, cy);
+
+    CWnd *pWnd = GetDlgItem(IDC_VIDEO);
+    if (pWnd)
+    {
+        pWnd->MoveWindow(0, 0, cx, cy);
+        pWnd->Invalidate();
+        pWnd->UpdateData();
+    }
+    // todo
+    pWnd = GetDlgItem(IDC_BUTTON_OPEN);
+    if (pWnd)
+    {
+        pWnd->SetWindowPos( NULL,4,cy-14-10,0,0,SWP_NOZORDER | SWP_NOSIZE );
+    }
+
+}

@@ -98,6 +98,7 @@ BEGIN_MESSAGE_MAP(CYUVPlayerDlg, CDialogEx)
     ON_BN_CLICKED(IDC_BUTTON_FIRST, &CYUVPlayerDlg::OnBnClickedButtonFirst)
     ON_BN_CLICKED(IDC_BUTTON_LAST, &CYUVPlayerDlg::OnBnClickedButtonLast)
     ON_WM_SIZE()
+    ON_WM_SIZING()
 END_MESSAGE_MAP()
 
 // CYUVPlayerDlg 消息处理程序
@@ -140,12 +141,29 @@ BOOL CYUVPlayerDlg::OnInitDialog()
         m_pSettingDlg = new CSettingDlg();
         m_pSettingDlg->Create(IDD_DIALOG_SETTING, this);
         m_pSettingDlg->SetParentWnd(this);
+        //m_pSettingDlg->CenterWindow(this);
     }
+    m_nStartX[0][0] = IDC_STATIC_FRAMECNT;
+    m_nStartX[0][1] = IDC_SLIDER1;
+    m_nStartX[0][2] = IDC_BUTTON_OPEN;
+    m_nStartX[0][3] = IDC_BUTTON_SAVE;
+    m_nStartX[0][4] = IDC_BUTTON_PLAY;
+    m_nStartX[0][5] = IDC_BUTTON_STOP;
+    m_nStartX[0][6] = IDC_BUTTON_PREV;
+    m_nStartX[0][7] = IDC_BUTTON_NEXT;
+    m_nStartX[0][8] = IDC_BUTTON_FIRST;
+    m_nStartX[0][9] = IDC_BUTTON_LAST;
+    m_nStartX[0][10] = IDC_BUTTON_SET;
 
-#if 0
+#if 01
     CRect rect;
-    GetDlgItem(IDC_BUTTON_OPEN)->GetWindowRect(rect);
-    ScreenToClient(rect);
+
+    for (int i = 0; i < 10; i++)
+    {
+        GetDlgItem(m_nStartX[0][i])->GetWindowRect(rect);
+        ScreenToClient(rect);
+        m_nStartX[1][i] = rect.left;
+    }
 #endif
 	return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
 }
@@ -219,7 +237,16 @@ void CYUVPlayerDlg::ShowSettingWindow()
     }
 
     m_pSettingDlg->ShowWindow(SW_SHOW);
+    //m_pSettingDlg->CenterWindow(this);
     //m_pParentWnd->CenterWindow(this);
+
+    /*
+    CWnd *pWnd = GetDlgItem(IDD_DIALOG_SETTING);
+    if (pWnd)
+    {
+        pWnd->SetWindowPos( NULL,4,10,0,0,SWP_NOZORDER|SWP_NOSIZE);
+    }
+    */
 }
 
 // -------------------------------------------------------
@@ -287,7 +314,7 @@ void CYUVPlayerDlg::OnPlayingPlay()
 
 void CYUVPlayerDlg::OnPlayingSetting()
 {
-
+    ShowSettingWindow();
 }
 
 
@@ -321,7 +348,7 @@ void CYUVPlayerDlg::OnROpen()
 
 void CYUVPlayerDlg::OnRSetting()
 {
-
+    ShowSettingWindow();
 }
 
 
@@ -404,15 +431,55 @@ void CYUVPlayerDlg::OnSize(UINT nType, int cx, int cy)
     CWnd *pWnd = GetDlgItem(IDC_VIDEO);
     if (pWnd)
     {
-        pWnd->MoveWindow(0, 0, cx, cy);
+        pWnd->MoveWindow(0, 0, cx, cy-26-20-21);
         pWnd->Invalidate();
         pWnd->UpdateData();
     }
-    // todo
-    pWnd = GetDlgItem(IDC_BUTTON_OPEN);
+    // 最右边的按钮
+    pWnd = GetDlgItem(m_nStartX[0][10]);
     if (pWnd)
     {
-        pWnd->SetWindowPos( NULL,4,cy-14-10,0,0,SWP_NOZORDER | SWP_NOSIZE );
+       pWnd->SetWindowPos(NULL,cx-30,cy-26,0,0,SWP_NOZORDER|SWP_NOSIZE);
     }
 
+    int startx = 2;
+    // 帧数统计
+    pWnd = GetDlgItem(m_nStartX[0][0]);
+    if (pWnd)
+    {
+        pWnd->SetWindowPos(NULL,startx+m_nStartX[1][0],cy-26-20-21,0,0,SWP_NOZORDER|SWP_NOSIZE);
+    }
+    // 滚动条
+    pWnd = GetDlgItem(m_nStartX[0][1]);
+    if (pWnd)
+    {
+        pWnd->MoveWindow(startx+0, cy-26-26, cx, cy-26-20-21);
+        pWnd->Invalidate();
+        //pWnd->SetWindowPos( NULL,startx+m_nStartX[1][1],cy-26-26,0,0,SWP_NOZORDER|SWP_NOSIZE);
+    }
+    // 水平位置相同的按钮
+    for (int i = 2; i < 10; i++)
+    {
+        pWnd = GetDlgItem(m_nStartX[0][i]);
+        if (pWnd)
+        {
+            pWnd->SetWindowPos(NULL,startx+m_nStartX[1][i],cy-26,0,0,SWP_NOZORDER|SWP_NOSIZE);
+        }
+    }
+}
+
+
+void CYUVPlayerDlg::OnSizing(UINT fwSide, LPRECT pRect)
+{
+    CDialogEx::OnSizing(fwSide, pRect);
+
+#if 0
+    CWnd *pWnd = GetDlgItem(IDC_VIDEO);
+    if (pWnd)
+    {
+        pWnd->MoveWindow(0, 0, pRect->right - pRect->left, pRect->bottom - pRect->top);
+        pWnd->Invalidate(FALSE);
+        pWnd->UpdateData();
+    }
+#endif
 }

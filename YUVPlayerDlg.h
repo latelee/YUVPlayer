@@ -27,6 +27,9 @@ private:
     int m_nYuvFormat;
     BOOL m_fLoop;
 
+
+    int m_nStartX[2][11];
+
 public:
     void GetParameters(int width, int height, int fps, int fmt, BOOL loop)
     {
@@ -75,4 +78,5 @@ public:
     afx_msg void OnBnClickedButtonFirst();
     afx_msg void OnBnClickedButtonLast();
     afx_msg void OnSize(UINT nType, int cx, int cy);
+    afx_msg void OnSizing(UINT fwSide, LPRECT pRect);
 };

@@ -80,4 +80,14 @@ public:
     afx_msg void OnBnClickedButtonLast();
     afx_msg void OnSize(UINT nType, int cx, int cy);
     afx_msg void OnSizing(UINT fwSide, LPRECT pRect);
+    afx_msg void OnStnClickedSTest();
+    CButton m_bFirstFrame;
+    CButton m_bLastFrame;
+    CButton m_bNextFrame;
+    CButton m_bOpenFile;
+    CButton m_bPlay;
+    CButton m_bPrevFrame;
+    CButton m_bSaveFrame;
+    CButton m_bSetting;
+    CButton m_bStop;
 };

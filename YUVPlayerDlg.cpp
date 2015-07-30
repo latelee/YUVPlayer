@@ -67,7 +67,16 @@ CYUVPlayerDlg::~CYUVPlayerDlg()
 
 void CYUVPlayerDlg::DoDataExchange(CDataExchange* pDX)
 {
-	CDialogEx::DoDataExchange(pDX);
+    CDialogEx::DoDataExchange(pDX);
+    DDX_Control(pDX, IDC_BUTTON_FIRST, m_bFirstFrame);
+    DDX_Control(pDX, IDC_BUTTON_LAST, m_bLastFrame);
+    DDX_Control(pDX, IDC_BUTTON_NEXT, m_bNextFrame);
+    DDX_Control(pDX, IDC_BUTTON_OPEN, m_bOpenFile);
+    DDX_Control(pDX, IDC_BUTTON_PLAY, m_bPlay);
+    DDX_Control(pDX, IDC_BUTTON_PREV, m_bPrevFrame);
+    DDX_Control(pDX, IDC_BUTTON_SAVE, m_bSaveFrame);
+    DDX_Control(pDX, IDC_BUTTON_SET, m_bSetting);
+    DDX_Control(pDX, IDC_BUTTON_STOP, m_bStop);
 }
 
 BEGIN_MESSAGE_MAP(CYUVPlayerDlg, CDialogEx)
@@ -166,6 +175,17 @@ BOOL CYUVPlayerDlg::OnInitDialog()
         m_nStartX[1][i] = rect.left;
     }
 #endif
+
+    m_bOpenFile.SetBitmap(LoadBitmap(AfxGetInstanceHandle(), MAKEINTRESOURCE(IDB_BM_OPEN)));
+    m_bSaveFrame.SetBitmap(LoadBitmap(AfxGetInstanceHandle(), MAKEINTRESOURCE(IDB_BM_SAVE)));
+    m_bPlay.SetBitmap(LoadBitmap(AfxGetInstanceHandle(), MAKEINTRESOURCE(IDB_BM_PLAY)));
+    m_bStop.SetBitmap(LoadBitmap(AfxGetInstanceHandle(), MAKEINTRESOURCE(IDB_BM_STOP)));
+    m_bPrevFrame.SetBitmap(LoadBitmap(AfxGetInstanceHandle(), MAKEINTRESOURCE(IDB_BM_PREV)));
+    m_bNextFrame.SetBitmap(LoadBitmap(AfxGetInstanceHandle(), MAKEINTRESOURCE(IDB_BM_NEXT)));
+    m_bFirstFrame.SetBitmap(LoadBitmap(AfxGetInstanceHandle(), MAKEINTRESOURCE(IDB_BM_FIRST)));
+    m_bLastFrame.SetBitmap(LoadBitmap(AfxGetInstanceHandle(), MAKEINTRESOURCE(IDB_BM_LAST)));
+    m_bSetting.SetBitmap(LoadBitmap(AfxGetInstanceHandle(), MAKEINTRESOURCE(IDB_BM_SETTING)));
+
 
     m_fInit = TRUE;
 	return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
@@ -426,7 +446,8 @@ void CYUVPlayerDlg::OnBnClickedButtonSet()
 
 
 
-
+// 窗口缩放
+// todo:只能宽、高同时缩放
 void CYUVPlayerDlg::OnSize(UINT nType, int cx, int cy)
 {
     CDialogEx::OnSize(nType, cx, cy);

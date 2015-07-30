@@ -22,6 +22,42 @@
     <None Include="res\YUVPlayer.ico">
       <Filter>资源文件</Filter>
     </None>
+    <None Include="res\icon1.ico">
+      <Filter>资源文件</Filter>
+    </None>
+    <None Include="res\open.bmp">
+      <Filter>资源文件</Filter>
+    </None>
+    <None Include="res\bitmap2.bmp">
+      <Filter>资源文件</Filter>
+    </None>
+    <None Include="res\first.bmp">
+      <Filter>资源文件</Filter>
+    </None>
+    <None Include="res\last.bmp">
+      <Filter>资源文件</Filter>
+    </None>
+    <None Include="res\pause.bmp">
+      <Filter>资源文件</Filter>
+    </None>
+    <None Include="res\play.bmp">
+      <Filter>资源文件</Filter>
+    </None>
+    <None Include="res\prev.bmp">
+      <Filter>资源文件</Filter>
+    </None>
+    <None Include="res\save.bmp">
+      <Filter>资源文件</Filter>
+    </None>
+    <None Include="res\setting.bmp">
+      <Filter>资源文件</Filter>
+    </None>
+    <None Include="res\stop.bmp">
+      <Filter>资源文件</Filter>
+    </None>
+    <None Include="res\next.bmp">
+      <Filter>资源文件</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="YUVPlayer.h">

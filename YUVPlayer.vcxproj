@@ -95,6 +95,18 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <None Include="ReadMe.txt" />
+    <None Include="res\bitmap2.bmp" />
+    <None Include="res\first.bmp" />
+    <None Include="res\icon1.ico" />
+    <None Include="res\last.bmp" />
+    <None Include="res\next.bmp" />
+    <None Include="res\open.bmp" />
+    <None Include="res\pause.bmp" />
+    <None Include="res\play.bmp" />
+    <None Include="res\prev.bmp" />
+    <None Include="res\save.bmp" />
+    <None Include="res\setting.bmp" />
+    <None Include="res\stop.bmp" />
     <None Include="res\YUVPlayer.ico" />
     <None Include="res\YUVPlayer.rc2" />
   </ItemGroup>

@@ -53,6 +53,7 @@ CYUVPlayerDlg::CYUVPlayerDlg(CWnd* pParent /*=NULL*/)
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
     m_pSettingDlg = NULL;
+    m_fInit = FALSE;
 }
 
 CYUVPlayerDlg::~CYUVPlayerDlg()
@@ -165,6 +166,8 @@ BOOL CYUVPlayerDlg::OnInitDialog()
         m_nStartX[1][i] = rect.left;
     }
 #endif
+
+    m_fInit = TRUE;
 	return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
 }
 
@@ -428,6 +431,7 @@ void CYUVPlayerDlg::OnSize(UINT nType, int cx, int cy)
 {
     CDialogEx::OnSize(nType, cx, cy);
 
+    if (!m_fInit) return;
     CWnd *pWnd = GetDlgItem(IDC_VIDEO);
     if (pWnd)
     {
@@ -453,9 +457,9 @@ void CYUVPlayerDlg::OnSize(UINT nType, int cx, int cy)
     pWnd = GetDlgItem(m_nStartX[0][1]);
     if (pWnd)
     {
-        pWnd->MoveWindow(startx+0, cy-26-26, cx, cy-26-20-21);
-        pWnd->Invalidate();
-        //pWnd->SetWindowPos( NULL,startx+m_nStartX[1][1],cy-26-26,0,0,SWP_NOZORDER|SWP_NOSIZE);
+        //pWnd->MoveWindow(startx+0, cy-26-26, cx, cy-26-20-21);
+        //pWnd->Invalidate();
+        pWnd->SetWindowPos( NULL,startx+m_nStartX[1][1],cy-26-26,cx,26,SWP_NOZORDER);
     }
     // 水平位置相同的按钮
     for (int i = 2; i < 10; i++)

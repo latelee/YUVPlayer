@@ -20,13 +20,14 @@ public:
 	virtual void DoDataExchange(CDataExchange* pDX);	// DDX/DDV Ö§³Ö
 
 private:
+    BOOL m_fInit;
+
     CSettingDlg* m_pSettingDlg;
     int m_nWidth;
     int m_nHeight;
     int m_nFps;
     int m_nYuvFormat;
     BOOL m_fLoop;
-
 
     int m_nStartX[2][11];
 

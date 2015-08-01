@@ -401,7 +401,17 @@ void CYUVPlayerDlg::OnBnClickedButtonSave()
 
 void CYUVPlayerDlg::OnBnClickedButtonPlay()
 {
-
+    static int play = 0;
+    if (!play)
+    {
+        m_bPlay.SetBitmap(LoadBitmap(AfxGetInstanceHandle(), MAKEINTRESOURCE(IDB_BM_PAUSE)));
+        play = 1;
+    }
+    else
+    {
+        m_bPlay.SetBitmap(LoadBitmap(AfxGetInstanceHandle(), MAKEINTRESOURCE(IDB_BM_PLAY)));
+        play = 0;
+    }
 }
 
 

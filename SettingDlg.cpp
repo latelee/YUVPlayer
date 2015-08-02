@@ -15,14 +15,13 @@ CSettingDlg::CSettingDlg(CWnd* pParent /*=NULL*/)
 	: CDialogEx(CSettingDlg::IDD, pParent)
 {
     m_pParentWnd = NULL;
+    m_strAddedSize = _T("160x120;176x144;320x240;352x288;640x480;704x576");
     m_nWidth = 176;
     m_nHeight = 144;
     m_nFps = 30;
     m_nFpsIndex = 7; // index 7 == 30
-    m_nYuvFormat = 0;
+    m_nYuvFormat = 1;   // tmpe yuv420
     m_fLoop = FALSE;
-
-    m_strAddedSize = _T("160x120;176x174;320x240;352x288;640x480;704x576");
 }
 
 CSettingDlg::~CSettingDlg()
@@ -71,41 +70,15 @@ BOOL CSettingDlg::ExistRegistration()
 void CSettingDlg::SetRegistration(CString& strSize, int width, int height, int fpsidx, int fmt, int loop)
 {
     HKEY hKey;
-    if (RegCreateKey(HKEY_CURRENT_USER, _T("Software\\YUVPlayer-latelee.org\\Setting"), &hKey) != ERROR_SUCCESS)
-    {
-        MessageBox(_T("RegCreateKey failed with Erro "));
-        return;
-    }
-    if (RegSetValueEx(hKey, _T("AddedSize"), 0, REG_SZ, (BYTE*)(strSize.GetBuffer()), strSize.GetLength()*sizeof(TCHAR)) != ERROR_SUCCESS)
-    {
-        MessageBox(_T("RegSetValueEx failed to write addsize"));
-        return;
-    }
-    if (RegSetValueEx(hKey, _T("FrameWidth"), 0, REG_DWORD, (BYTE*)&width, 4) != ERROR_SUCCESS)
-    {
-        MessageBox(_T("RegSetValueEx failed to write width"));
-        return;
-    }
-    if (RegSetValueEx(hKey, _T("FrameHeight"), 0, REG_DWORD, (BYTE*)&height, 4) != ERROR_SUCCESS)
-    {
-        MessageBox(_T("RegSetValueEx failed to write height"));
-        return;
-    }
-    if (RegSetValueEx(hKey, _T("FrameRate"), 0, REG_DWORD, (BYTE*)&fpsidx, 4) != ERROR_SUCCESS)
-    {
-        MessageBox(_T("RegSetValueEx failed to write frame rate"));
-        return;
-    }
-    if (RegSetValueEx(hKey, _T("CurrentPixelFormat"), 0, REG_DWORD, (BYTE*)&fmt, 4) != ERROR_SUCCESS)
-    {
-        MessageBox(_T("RegSetValueEx failed to write fmt"));
-        return;
-    }
-    if (RegSetValueEx(hKey, _T("Loop"), 0, REG_DWORD, (BYTE*)&loop, 4) != ERROR_SUCCESS)
-    {
-        MessageBox(_T("RegSetValueEx failed to write loop"));
-        return;
-    }
+
+    RegCreateKey(HKEY_CURRENT_USER, _T("Software\\YUVPlayer-latelee.org\\Setting"), &hKey);
+    RegSetValueEx(hKey, _T("AddedSize"), 0, REG_SZ, (BYTE*)(strSize.GetBuffer()), strSize.GetLength()*sizeof(TCHAR));
+    RegSetValueEx(hKey, _T("FrameWidth"), 0, REG_DWORD, (BYTE*)&width, 4);
+    RegSetValueEx(hKey, _T("FrameHeight"), 0, REG_DWORD, (BYTE*)&height, 4);
+    RegSetValueEx(hKey, _T("FrameRate"), 0, REG_DWORD, (BYTE*)&fpsidx, 4);
+    RegSetValueEx(hKey, _T("CurrentPixelFormat"), 0, REG_DWORD, (BYTE*)&fmt, 4);
+    RegSetValueEx(hKey, _T("Loop"), 0, REG_DWORD, (BYTE*)&loop, 4);
+
     RegCloseKey(hKey);
 }
 
@@ -115,41 +88,14 @@ void CSettingDlg::GetRegistration(CString& strSize, int& width, int& height, int
     DWORD dwType = 0;
     DWORD dwLen = 1024; // 此处值是否适合？CString类型如何给定长度？
     //BYTE szBuffer[1024] = {0};
-    if (RegOpenKeyEx(HKEY_CURRENT_USER,  _T("Software\\YUVPlayer-latelee.org\\Setting"), 0, KEY_QUERY_VALUE, &hKey) != ERROR_SUCCESS)
-    {
-        MessageBox(_T("RegOpenKeyEx failed with error"));
-        return;
-    }
-    if (RegQueryValueEx(hKey, _T("AddedSize"), NULL, &dwType, (BYTE*)(strSize.GetBuffer()), &dwLen) != ERROR_SUCCESS)
-    {
-        MessageBox(_T("RegQueryValueEx AddedSize failed"));
-        return;
-    }
-    if (RegQueryValueEx(hKey, _T("FrameWidth"), NULL, &dwType, (BYTE*)&width, &dwLen) != ERROR_SUCCESS)
-    {
-        MessageBox(_T("RegQueryValueEx FrameWidth failed"));
-        return;
-    }
-    if (RegQueryValueEx(hKey, _T("FrameHeight"), NULL, &dwType, (BYTE*)&height, &dwLen) != ERROR_SUCCESS)
-    {
-        MessageBox(_T("RegQueryValueEx FrameWidth failed"));
-        return;
-    }
-    if (RegQueryValueEx(hKey, _T("FrameRate"), NULL, &dwType, (BYTE*)&fpsidx, &dwLen) != ERROR_SUCCESS)
-    {
-        MessageBox(_T("RegQueryValueEx FrameWidth failed"));
-        return;
-    }
-    if (RegQueryValueEx(hKey, _T("CurrentPixelFormat"), NULL, &dwType, (BYTE*)&fmt, &dwLen) != ERROR_SUCCESS)
-    {
-        MessageBox(_T("RegQueryValueEx FrameWidth failed"));
-        return;
-    }
-    if (RegQueryValueEx(hKey, _T("Loop"), NULL, &dwType, (BYTE*)&loop, &dwLen) != ERROR_SUCCESS)
-    {
-        MessageBox(_T("RegQueryValueEx FrameWidth failed"));
-        return;
-    }
+
+    RegOpenKeyEx(HKEY_CURRENT_USER,  _T("Software\\YUVPlayer-latelee.org\\Setting"), 0, KEY_QUERY_VALUE, &hKey);
+    RegQueryValueEx(hKey, _T("AddedSize"), NULL, &dwType, (BYTE*)(strSize.GetBuffer()), &dwLen);
+    RegQueryValueEx(hKey, _T("FrameWidth"), NULL, &dwType, (BYTE*)&width, &dwLen);
+    RegQueryValueEx(hKey, _T("FrameHeight"), NULL, &dwType, (BYTE*)&height, &dwLen);
+    RegQueryValueEx(hKey, _T("FrameRate"), NULL, &dwType, (BYTE*)&fpsidx, &dwLen);
+    RegQueryValueEx(hKey, _T("CurrentPixelFormat"), NULL, &dwType, (BYTE*)&fmt, &dwLen);
+    RegQueryValueEx(hKey, _T("Loop"), NULL, &dwType, (BYTE*)&loop, &dwLen);
 
     RegCloseKey(hKey);
 }
@@ -164,7 +110,8 @@ BOOL CSettingDlg::OnInitDialog()
     CString strTemp;
 
     // default
-    if (!ExistRegistration())
+    //if (!ExistRegistration())
+    if (1)
     {
         SetRegistration(m_strAddedSize, m_nWidth,m_nHeight, m_nFpsIndex, m_nYuvFormat, m_fLoop);
     }
@@ -197,16 +144,7 @@ BOOL CSettingDlg::OnInitDialog()
             nResolutionIdx = i;
     }
 
-#if 0
-    m_cbResolution.AddString(_T("160x120"));
-    m_cbResolution.AddString(_T("176x174"));
-    m_cbResolution.AddString(_T("320x240"));
-    m_cbResolution.AddString(_T("352x288"));
-    m_cbResolution.AddString(_T("640x480"));
-    m_cbResolution.AddString(_T("704x576"));
-#endif
-
-    m_cbYuvFormat.SetCurSel(0);
+    m_cbYuvFormat.SetCurSel(m_nYuvFormat);
     m_cbFps.SetCurSel(m_nFpsIndex);
     m_cbResolution.SetCurSel(nResolutionIdx);
     m_nYuvFormat = m_cbYuvFormat.GetCurSel();

@@ -18,16 +18,14 @@ public:
 public:
     void SetParentWnd(CYUVPlayerDlg* pWnd) {m_pParentWnd = pWnd;}
 
-    void SetParameters(CString& strSize, int width, int height, int fpsidx, int fmt, BOOL loop)
+
+    void SetParametersToParentWnd(int& width, int& height, int& fps, int& fmt, BOOL& loop)
     {
-        m_strAddedSize = strSize;
-        m_nWidth = width;
-        m_nHeight = height;
-        m_nFpsIndex = fpsidx;
-        m_nYuvFormat = fmt;
-        m_fLoop = loop;
-        
-        //UpdateWindow(FALSE);
+        width = m_nWidth;
+        height = m_nHeight;
+        fps = m_nFps;
+        fmt = m_nYuvFormat;
+        loop = m_fLoop;
     }
 
     void SetRegistration(CString& strSize, int width, int height, int fpsidx, int fmt, int loop);

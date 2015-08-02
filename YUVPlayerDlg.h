@@ -6,6 +6,18 @@
 
 #include "SettingDlg.h"
 
+#define APP_NAM _T("YUV Player")
+
+// yuv格式宏定义
+#define FMT_Y       0
+#define FMT_YUV420  1
+#define FMT_YUV422  2
+#define FMT_YUV444  3
+#define FMT_YUYV    
+#define FMT_UYVY    
+#define FMT_NV12
+#define FMT_NV16
+
 #define MAX_URL_LENGTH 256
 typedef struct yuv_pic_tag
 {
@@ -43,8 +55,6 @@ private:
     char*   m_pbRgbData;    // RGB数据
     UINT    m_iYuvSize; // 一幅图像大小
     UINT    m_iRgbSize; //
-    int     m_iFps;     // 帧率
-    int     m_iYuvMode; // YUV格式(0: yuv420 1: yuv422)
 
     BITMAPFILEHEADER m_bmHeader;
     BITMAPINFO       m_bmInfo;
@@ -54,11 +64,11 @@ private:
 
     // 共用内部函数
 private:
-    void OpenFile();
+    void ShowOpenedFrame();
     void ShowPicture(BYTE* pbData, int iSize);
 
 public:
-    void GetParameters(int width, int height, int fps, int fmt, BOOL loop)
+    void GetParameters(int& width, int height, int fps, int fmt, BOOL loop)
     {
         m_nWidth = width;
         m_nHeight = height;

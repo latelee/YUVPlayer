@@ -7,10 +7,15 @@
 #include "YUVPlayerDlg.h"
 #include "afxdialogex.h"
 
+#include "yuv2rgb.h"
+
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #endif
 
+static BOOL g_iYuv420Init = FALSE;
+static BOOL g_iYuv422Init = FALSE;
+static BOOL g_iEndFile = FALSE;
 
 // 用于应用程序“关于”菜单项的 CAboutDlg 对话框
 
@@ -109,6 +114,7 @@ BEGIN_MESSAGE_MAP(CYUVPlayerDlg, CDialogEx)
     ON_BN_CLICKED(IDC_BUTTON_LAST, &CYUVPlayerDlg::OnBnClickedButtonLast)
     ON_WM_SIZE()
     ON_WM_SIZING()
+    ON_WM_DROPFILES()
 END_MESSAGE_MAP()
 
 // CYUVPlayerDlg 消息处理程序
@@ -385,9 +391,77 @@ void CYUVPlayerDlg::OnRExit()
 /////////////////////////////////////////// ------> 单击按钮事件
 void CYUVPlayerDlg::OnBnClickedButtonOpen()
 {
+    OpenFile();
 
+    // 设置YUV格式
+    //m_iYuvMode = m_cbYuvFormat.GetCurSel();
+    if (m_iYuvMode == 0)    // YUV420
+    {
+        if (!g_iYuv420Init)
+        {
+            init_yuv420_table();
+            g_iYuv420Init = TRUE;
+            m_iYuvSize = m_nWidth * m_nHeight * 3 / 2;
+        }
+    }
+    if (m_iYuvMode == 1)    // YUV422
+    {
+        if (!g_iYuv422Init)
+        {
+            init_yuv422_table();
+            g_iYuv422Init = TRUE;
+            m_iYuvSize = m_nWidth * m_nHeight * 2;
+        }
+    }
 
-    int aa =  m_nWidth;
+    m_iRgbSize = m_nWidth * m_nHeight * 3 + 54;
+
+    m_pbYuvData = new char[m_iYuvSize];
+    m_pbRgbData  = new char[m_iRgbSize];
+
+    // 打开文件
+    // 暂时只支持一个文件，如果已经打开，就关闭
+    // TODO：此处应该能优化
+    if (CFile::hFileNull != m_cFile.m_hFile)
+    {
+        m_cFile.Close();
+    }
+    if (!m_cFile.Open(m_strPathName.GetBuffer(), CFile::modeRead))
+    {
+        MessageBox(_T("打开YUV文件失败!"));
+        return;
+    }
+    m_cFile.Read(m_pbYuvData, m_iYuvSize);
+
+    // 先添加BMP头
+    m_bmHeader.bfType = 'MB';
+    m_bmHeader.bfSize = m_iRgbSize + sizeof(BITMAPFILEHEADER) + sizeof(BITMAPINFOHEADER);
+    m_bmHeader.bfReserved1 = 0;
+    m_bmHeader.bfReserved2 = 0;
+    m_bmHeader.bfOffBits = sizeof(BITMAPFILEHEADER) + sizeof(BITMAPINFOHEADER);
+    m_bmInfo.bmiHeader.biSize   = sizeof(BITMAPINFOHEADER);
+    m_bmInfo.bmiHeader.biWidth  = m_nWidth;
+    m_bmInfo.bmiHeader.biHeight = m_iYuvMode ? m_nHeight : (-m_nHeight);    // YUV420是倒过来的图像
+    m_bmInfo.bmiHeader.biPlanes = 1;
+    m_bmInfo.bmiHeader.biBitCount = 24;
+    m_bmInfo.bmiHeader.biCompression = BI_RGB;
+    m_bmInfo.bmiHeader.biSizeImage   = m_iRgbSize;
+    m_bmInfo.bmiHeader.biXPelsPerMeter = 0;
+    m_bmInfo.bmiHeader.biYPelsPerMeter = 0;
+    m_bmInfo.bmiHeader.biClrUsed = 0;
+    m_bmInfo.bmiHeader.biClrImportant = 0;
+
+    memcpy(m_pbRgbData, &m_bmHeader, sizeof(BITMAPFILEHEADER));
+    memcpy(m_pbRgbData+sizeof(BITMAPFILEHEADER), &m_bmInfo, sizeof(BITMAPINFOHEADER));
+
+    // 再转换格式
+    if (m_iYuvMode == 0)
+        yuv420_to_rgb24((unsigned char *)m_pbYuvData, (unsigned char *)m_pbRgbData+54, m_nWidth, m_nHeight);
+    else if (m_iYuvMode == 1)
+        yuv422_to_rgb24((unsigned char *)m_pbYuvData, (unsigned char *)m_pbRgbData+54, m_nWidth, m_nHeight);
+
+    // 显示
+//    ShowPicture((BYTE *)m_pbRgbData, m_iRgbSize);
 
     return;
 }
@@ -517,4 +591,53 @@ void CYUVPlayerDlg::OnSizing(UINT fwSide, LPRECT pRect)
         pWnd->UpdateData();
     }
 #endif
+}
+
+void CYUVPlayerDlg::OnDropFiles(HDROP hDropInfo)
+{
+    // note 用m_strPathName的话，关闭窗口后，进程还在
+    CDialogEx::OnDropFiles(hDropInfo);
+    wchar_t* pFilePathName =(wchar_t *)malloc(MAX_URL_LENGTH);
+    ::DragQueryFile(hDropInfo, 0, pFilePathName, MAX_URL_LENGTH);  // 获取拖放文件的完整文件名，最关键！
+    m_strPathName.Format(_T("%s"), pFilePathName);
+    ::DragFinish(hDropInfo);   // 注意这个不能少，它用于释放Windows 为处理文件拖放而分配的内存
+    this->SetWindowText(m_strPathName.GetBuffer());
+}
+
+/////////////////////////////
+// 内部实现
+
+// 打开文件 对话框
+void CYUVPlayerDlg::OpenFile()
+{
+    wchar_t szFilter[] = _T("YUV Files(*.yuv;*.raw)|*.yuv;*.raw|All Files(*.*)|*.*||");
+    CFileDialog fileDlg(TRUE, _T("YUV"), NULL, OFN_HIDEREADONLY | OFN_NOCHANGEDIR | OFN_FILEMUSTEXIST, szFilter);
+    fileDlg.GetOFN().lpstrTitle = _T("选择YUV文件");   // 标题
+    if (fileDlg.DoModal() != IDOK)
+        return;
+
+    m_strPathName = fileDlg.GetPathName();
+    this->SetWindowText(m_strPathName.GetBuffer());
+
+}
+
+// 显示图片
+void CYUVPlayerDlg::ShowPicture(BYTE* pbData, int iSize)
+{
+    CWnd* pWnd=GetDlgItem(IDC_VIDEO);   // IDC_VIDEO：picture contral 控件ID
+    IStream* pPicture = NULL;
+    CreateStreamOnHGlobal(NULL,TRUE,&pPicture);
+    if( pPicture != NULL )
+    {
+        pPicture->Write(pbData,  iSize, NULL);
+        LARGE_INTEGER liTemp = { 0 };
+        pPicture->Seek(liTemp, STREAM_SEEK_SET, NULL);
+        Bitmap TempBmp(pPicture);
+        RenderBitmap(pWnd, &TempBmp);
+    }
+    if(pPicture != NULL)
+    {
+        pPicture->Release();
+        pPicture = NULL;
+    }
 }

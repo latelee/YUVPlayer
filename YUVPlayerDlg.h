@@ -6,6 +6,13 @@
 
 #include "SettingDlg.h"
 
+#define MAX_URL_LENGTH 256
+typedef struct yuv_pic_tag
+{
+    char* yuv_data[4];
+    int   yuv_linesize[4]; //number of bytes per line
+} yuv_pic;
+
 // CYUVPlayerDlg 对话框
 class CYUVPlayerDlg : public CDialogEx
 {
@@ -29,7 +36,26 @@ private:
     int m_nYuvFormat;
     BOOL m_fLoop;
 
-    int m_nStartX[2][11];
+    int m_nStartX[2][11];   // 窗口拖动所需位置
+
+    CString m_strPathName;  // 文件名称(包括路径)
+    char*   m_pbYuvData;    // YUV数据
+    char*   m_pbRgbData;    // RGB数据
+    UINT    m_iYuvSize; // 一幅图像大小
+    UINT    m_iRgbSize; //
+    int     m_iFps;     // 帧率
+    int     m_iYuvMode; // YUV格式(0: yuv420 1: yuv422)
+
+    BITMAPFILEHEADER m_bmHeader;
+    BITMAPINFO       m_bmInfo;
+
+    CFile m_cFile;
+    CWinThread* m_pWinThread;
+
+    // 共用内部函数
+private:
+    void OpenFile();
+    void ShowPicture(BYTE* pbData, int iSize);
 
 public:
     void GetParameters(int width, int height, int fps, int fmt, BOOL loop)
@@ -90,4 +116,5 @@ public:
     CButton m_bSaveFrame;
     CButton m_bSetting;
     CButton m_bStop;
+    afx_msg void OnDropFiles(HDROP hDropInfo);
 };

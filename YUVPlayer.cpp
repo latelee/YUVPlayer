@@ -49,6 +49,10 @@ BOOL CYUVPlayerApp::InitInstance()
 	InitCtrls.dwICC = ICC_WIN95_CLASSES;
 	InitCommonControlsEx(&InitCtrls);
 
+    GdiplusStartupInput gdiplusStartupInput;
+    //ULONG_PTR gdiplusToken;
+    GdiplusStartup(&m_gdiplusToken, &gdiplusStartupInput, NULL);
+
 	CWinApp::InitInstance();
 
 
@@ -90,4 +94,12 @@ BOOL CYUVPlayerApp::InitInstance()
 	// 由于对话框已关闭，所以将返回 FALSE 以便退出应用程序，
 	//  而不是启动应用程序的消息泵。
 	return FALSE;
+}
+
+int CYUVPlayerApp::ExitInstance()
+{
+    // TODO: Add your specialized code here and/or call the base class
+    GdiplusShutdown(m_gdiplusToken); // ??
+
+    return CWinApp::ExitInstance();
 }

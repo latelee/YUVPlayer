@@ -28,6 +28,9 @@ public:
 
 	DECLARE_MESSAGE_MAP()
     afx_msg void OnHelpAbout();
+
+    ULONG_PTR m_gdiplusToken;
+    virtual int ExitInstance();
 };
 
 extern CYUVPlayerApp theApp;

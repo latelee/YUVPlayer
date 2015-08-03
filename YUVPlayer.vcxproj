@@ -95,9 +95,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <None Include="ReadMe.txt" />
-    <None Include="res\bitmap2.bmp" />
     <None Include="res\first.bmp" />
-    <None Include="res\icon1.ico" />
     <None Include="res\last.bmp" />
     <None Include="res\next.bmp" />
     <None Include="res\open.bmp" />

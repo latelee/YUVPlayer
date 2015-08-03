@@ -38,7 +38,7 @@ public:
 	protected:
 	virtual void DoDataExchange(CDataExchange* pDX);	// DDX/DDV 支持
 
-private:
+public:
     BOOL m_fInit;
 
     CSettingDlg* m_pSettingDlg;
@@ -63,7 +63,6 @@ private:
     CWinThread* m_pWinThread;
 
     // 共用内部函数
-private:
     void ShowOpenedFrame();
     void ShowPicture(BYTE* pbData, int iSize);
 

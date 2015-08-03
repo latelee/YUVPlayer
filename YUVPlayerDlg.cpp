@@ -17,6 +17,8 @@ static BOOL g_iYuv420Init = FALSE;
 static BOOL g_iYuv422Init = FALSE;
 static BOOL g_iEndFile = FALSE;
 
+UINT Play(LPVOID pParam);
+
 // 用于应用程序“关于”菜单项的 CAboutDlg 对话框
 
 class CAboutDlg : public CDialogEx
@@ -66,6 +68,10 @@ CYUVPlayerDlg::CYUVPlayerDlg(CWnd* pParent /*=NULL*/)
     m_nFps = 30;
     m_nYuvFormat = 0;
     m_fLoop = FALSE;
+
+    m_pbYuvData = NULL;
+    m_pbRgbData = NULL;
+    m_pWinThread = NULL;
 }
 
 CYUVPlayerDlg::~CYUVPlayerDlg()
@@ -191,14 +197,27 @@ BOOL CYUVPlayerDlg::OnInitDialog()
     // 贴图
     m_bOpenFile.SetBitmap(LoadBitmap(AfxGetInstanceHandle(), MAKEINTRESOURCE(IDB_BM_OPEN)));
     m_bSaveFrame.SetBitmap(LoadBitmap(AfxGetInstanceHandle(), MAKEINTRESOURCE(IDB_BM_SAVE)));
+    m_bSaveFrame.EnableWindow(FALSE);
     m_bPlay.SetBitmap(LoadBitmap(AfxGetInstanceHandle(), MAKEINTRESOURCE(IDB_BM_PLAY)));
+    m_bPlay.EnableWindow(FALSE);
     m_bStop.SetBitmap(LoadBitmap(AfxGetInstanceHandle(), MAKEINTRESOURCE(IDB_BM_STOP)));
+    m_bStop.EnableWindow(FALSE);
     m_bPrevFrame.SetBitmap(LoadBitmap(AfxGetInstanceHandle(), MAKEINTRESOURCE(IDB_BM_PREV)));
+    m_bPrevFrame.EnableWindow(FALSE);
     m_bNextFrame.SetBitmap(LoadBitmap(AfxGetInstanceHandle(), MAKEINTRESOURCE(IDB_BM_NEXT)));
+    m_bNextFrame.EnableWindow(FALSE);
     m_bFirstFrame.SetBitmap(LoadBitmap(AfxGetInstanceHandle(), MAKEINTRESOURCE(IDB_BM_FIRST)));
+    m_bFirstFrame.EnableWindow(FALSE);
     m_bLastFrame.SetBitmap(LoadBitmap(AfxGetInstanceHandle(), MAKEINTRESOURCE(IDB_BM_LAST)));
+    m_bLastFrame.EnableWindow(FALSE);
     m_bSetting.SetBitmap(LoadBitmap(AfxGetInstanceHandle(), MAKEINTRESOURCE(IDB_BM_SETTING)));
 
+    // 创建互斥量
+    HANDLE hPlay = NULL;
+    if ((hPlay = OpenMutex(MUTEX_ALL_ACCESS,FALSE,_T("Play"))) == NULL)
+    {
+        hPlay = CreateMutex(NULL, FALSE, _T("Play"));
+    }
 
     m_fInit = TRUE;
 	return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
@@ -390,7 +409,18 @@ void CYUVPlayerDlg::OnRSetting()
 
 void CYUVPlayerDlg::OnRExit()
 {
+    if (m_pbYuvData != NULL)
+    {
+        delete[] m_pbYuvData;
+        m_pbYuvData = NULL;
+    }
 
+    if (m_pbRgbData != NULL)
+    {
+        delete[] m_pbRgbData;
+        m_pbRgbData = NULL;
+    }
+    OnCancel();
 }
 
 /////////////////////////////////////////// <------ 右键菜单事件
@@ -411,6 +441,14 @@ void CYUVPlayerDlg::OnBnClickedButtonOpen()
 
     ShowOpenedFrame();
 
+    m_bSaveFrame.EnableWindow(TRUE);
+    m_bPlay.EnableWindow(TRUE);
+    //m_bStop.EnableWindow(TRUE);
+    m_bPrevFrame.EnableWindow(TRUE);
+    m_bNextFrame.EnableWindow(TRUE);
+    m_bFirstFrame.EnableWindow(TRUE);
+    m_bLastFrame.EnableWindow(TRUE);
+
     return;
 }
 
@@ -423,17 +461,46 @@ void CYUVPlayerDlg::OnBnClickedButtonSave()
 
 void CYUVPlayerDlg::OnBnClickedButtonPlay()
 {
-    static int play = 0;
-    if (!play)
+    static BOOL bPlay = TRUE;
+
+    //UpdateData();
+    m_bStop.EnableWindow(TRUE);
+
+    if (bPlay)
     {
+        //GetDlgItem(IDC_BN_PLAY)->SetWindowText(_T("暂停"));
         m_bPlay.SetBitmap(LoadBitmap(AfxGetInstanceHandle(), MAKEINTRESOURCE(IDB_BM_PAUSE)));
-        play = 1;
+        bPlay = FALSE;
     }
     else
     {
         m_bPlay.SetBitmap(LoadBitmap(AfxGetInstanceHandle(), MAKEINTRESOURCE(IDB_BM_PLAY)));
-        play = 0;
+        bPlay = TRUE;
     }
+
+    HANDLE hPlay = NULL;
+    hPlay = OpenMutex(MUTEX_ALL_ACCESS, FALSE, _T("Play"));
+
+    if (!hPlay)
+    {
+        CString msg;
+        //printErrorMessage("Open Mutex failed.", msg);
+        MessageBox(msg);
+    }
+
+    if (bPlay)
+    {
+        WaitForSingleObject(hPlay, 0);
+        //MessageBox("Play...");
+    }
+    else
+    {
+        ReleaseMutex(hPlay);
+        //MessageBox("Pause...");
+    }
+
+    if (m_pWinThread == NULL)
+        m_pWinThread = AfxBeginThread(Play, this);
 }
 
 
@@ -556,6 +623,14 @@ void CYUVPlayerDlg::OnDropFiles(HDROP hDropInfo)
 
     // 显示第一帧
     ShowOpenedFrame();
+
+    m_bSaveFrame.EnableWindow(TRUE);
+    m_bPlay.EnableWindow(TRUE);
+    //m_bStop.EnableWindow(TRUE);
+    m_bPrevFrame.EnableWindow(TRUE);
+    m_bNextFrame.EnableWindow(TRUE);
+    m_bFirstFrame.EnableWindow(TRUE);
+    m_bLastFrame.EnableWindow(TRUE);
 }
 
 /////////////////////////////
@@ -679,4 +754,103 @@ void CYUVPlayerDlg::ShowPicture(BYTE* pbData, int iSize)
         pPicture->Release();
         pPicture = NULL;
     }
+}
+
+// 播放线程
+UINT Play(LPVOID pParam)
+{
+    int i = 0;
+    CYUVPlayerDlg* pWin = (CYUVPlayerDlg *)pParam;  // 对话框类
+
+    int iTimeSpan = 1000 / pWin->m_nFps;
+
+    if (CFile::hFileNull == pWin->m_cFile.m_hFile)
+    {
+        //MessageBox("请先打开文件");
+        return -1;
+    }
+
+    HANDLE hPlay = OpenMutex(MUTEX_ALL_ACCESS, FALSE, _T("Play"));
+
+    if (!hPlay)
+    {
+        CString msg;
+        //printErrorMessage("Open Mutex failed.", msg);
+        MessageBox(pWin->m_hWnd, msg, NULL, MB_OK);
+    }
+
+    CString strTemp;
+    BOOL bEof = FALSE;
+
+    //if (m_cLoop.GetCheck())
+    //    MessageBox("Check");
+    while (!bEof)
+    {
+        DWORD t1 = GetTickCount();
+
+        if (WAIT_OBJECT_0 == WaitForSingleObject(hPlay,INFINITE))
+        {
+            ReleaseMutex(hPlay);
+        }
+        if (pWin->m_iYuvSize != pWin->m_cFile.Read(pWin->m_pbYuvData, pWin->m_iYuvSize))
+        {
+            bEof = TRUE;
+            g_iEndFile = TRUE;
+            //m_cFile.SeekToBegin();
+            //i = 0;
+            break;
+        }
+        i++;
+        pWin->m_cFile.Seek(pWin->m_iYuvSize * i, SEEK_SET);
+        // 先添加BMP头
+        pWin->m_bmHeader.bfType = 'MB';
+        pWin->m_bmHeader.bfSize = pWin->m_iRgbSize + sizeof(BITMAPFILEHEADER) + sizeof(BITMAPINFOHEADER);
+        pWin->m_bmHeader.bfReserved1 = 0;
+        pWin->m_bmHeader.bfReserved2 = 0;
+        pWin->m_bmHeader.bfOffBits = sizeof(BITMAPFILEHEADER) + sizeof(BITMAPINFOHEADER);
+        pWin->m_bmInfo.bmiHeader.biSize   = sizeof(BITMAPINFOHEADER);
+        pWin->m_bmInfo.bmiHeader.biWidth  = pWin->m_nWidth;
+        pWin->m_bmInfo.bmiHeader.biHeight = (pWin->m_nYuvFormat == FMT_YUV420) ? (-pWin->m_nHeight) : pWin->m_nHeight;    // YUV420是倒过来的图像
+        pWin->m_bmInfo.bmiHeader.biPlanes = 1;
+        pWin->m_bmInfo.bmiHeader.biBitCount = 24;
+        pWin->m_bmInfo.bmiHeader.biCompression = BI_RGB;
+        pWin->m_bmInfo.bmiHeader.biSizeImage   = pWin->m_iRgbSize;
+        pWin->m_bmInfo.bmiHeader.biXPelsPerMeter = 0;
+        pWin->m_bmInfo.bmiHeader.biYPelsPerMeter = 0;
+        pWin->m_bmInfo.bmiHeader.biClrUsed = 0;
+        pWin->m_bmInfo.bmiHeader.biClrImportant = 0;
+
+        memcpy(pWin->m_pbRgbData, &(pWin->m_bmHeader), sizeof(BITMAPFILEHEADER));
+        memcpy(pWin->m_pbRgbData+sizeof(BITMAPFILEHEADER), &(pWin->m_bmInfo), sizeof(BITMAPINFOHEADER));
+
+        // 再转换格式
+        switch (pWin->m_nYuvFormat)
+        {
+        case FMT_YUV420:
+            yuv420_to_rgb24((unsigned char *)pWin->m_pbYuvData, (unsigned char *)pWin->m_pbRgbData+54, pWin->m_nWidth, pWin->m_nHeight);
+            break;
+        case FMT_YUV422:
+            yuv422_to_rgb24((unsigned char *)pWin->m_pbYuvData, (unsigned char *)pWin->m_pbRgbData+54, pWin->m_nWidth, pWin->m_nHeight);
+            break;
+        default:
+            break;
+        }
+        // 显示
+        pWin->ShowPicture((BYTE *)pWin->m_pbRgbData, pWin->m_iRgbSize);
+
+        DWORD t2 = GetTickCount();
+        int t = t2 - t1;
+        if (t < iTimeSpan)
+            Sleep(iTimeSpan - t);
+
+        //strTemp.Format("正在播放: %d %d %d %d", iTimeSpan, t1, t2, t);
+    }
+
+    pWin->m_bStop.EnableWindow(FALSE);
+    pWin->m_bPlay.SetBitmap(LoadBitmap(AfxGetInstanceHandle(), MAKEINTRESOURCE(IDB_BM_PLAY)));
+
+    pWin->m_pWinThread = NULL;
+    AfxEndThread(0);
+
+    return 0;
 }

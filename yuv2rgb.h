@@ -1,73 +1,150 @@
 /**
- * @file   yuv2rgb.c
+ * @file   yuv2rgb.h
  * @author Late Lee
  * @date   2012.01.20
  * 
  * @brief  
- *         YUV420/YUV420转RGB24实现代码，另附测试函数
+ *         YUV422P/YUV420P/YUV422SP转RGB24实现代码
  *
- * @note & @bug
+ * @note
  *         1、在Windows编译测试
+ *         2、代码中使用的YUV420P、YUV422P是平面(planar)格式，不是打包(packed)格式
+ *
+ *         3、qcif: 176*144
+              cif: 352*288
+ * @todo  确定好RGB排序到底是什么
+ *
+ * @log   2013-10-26 参考422p函数，实现422sp转换422p格式函数。将初始化接口隐藏，不对外公开
+ *        2014-02-10 封装统一一个函数。
+ *
+ * 笔记：
+            每个Y、U、V、R、G、B均占用1个字节
+            YUV422P平面格式
+            Y、U、V分开存储，Y占w*h，U、V分别占w*h/2。每行Y有w个，U、V各w/2个。
+            两个Y共用一个U和V，两个像素有Y分量2个，U、V分量各一个，共4字节，因此一个像素占2字节。
+
+            内存分布如下：
+                    w
+            +--------------------+
+            |Y0Y1Y2Y3...         |
+            |...                 |   h
+            |...                 |
+            |                    |
+            +--------------------+
+            |U0U1      |
+            |...       |   h
+            |...       |
+            |          |
+            +----------+
+            |V0V1      |
+            |...       |  h
+            |...       |
+            |          |
+            +----------+
+                w/2
+
+            第一个像素：Y0 U0 V0
+            第二个像素：Y1 U0 V0
+            第三个像素：Y2 U1 V1
+            第四个像素：Y3 U1 V1
+
+			每种格式分布见转换函数处
  */
 
 #ifndef _YUV2RGB_H_
 #define _YUV2RGB_H_
 
-typedef unsigned short  WORD;
-typedef unsigned long   DWORD;
-typedef long            LONG;
-typedef unsigned int    DWORD32;
-
-//#define YUV_DEBUG
-
-#ifdef YUV_DEBUG
-#pragma pack(push)
-// 2字节对齐，共14
-#pragma pack(2)
-typedef struct tagBITMAPFILEHEADER1 {
-        WORD    bfType;
-        DWORD   bfSize;
-        WORD    bfReserved1;
-        WORD    bfReserved2;
-        DWORD   bfOffBits;
-} BITMAPFILEHEADER;
-
-// 40
-typedef struct tagBITMAPINFOHEADER1{
-        DWORD      biSize;
-        LONG       biWidth;
-        LONG       biHeight;
-        WORD       biPlanes;
-        WORD       biBitCount;
-        DWORD      biCompression;
-        DWORD      biSizeImage;
-        LONG       biXPelsPerMeter;
-        LONG       biYPelsPerMeter;
-        DWORD      biClrUsed;
-        DWORD      biClrImportant;
-} BITMAPINFOHEADER;
-#pragma pack(pop)
-#endif
-
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-void init_yuv422_table(void);
-void yuv422_to_rgb24(unsigned char *yuvbuffer, unsigned char *rgbbuffer, int width, int height);
+/**
+ * @brief  YUV422P转换为RGB24(查表法)
+ * 
+ * @param  yuvbuffer[IN]    YUV422P平面格式缓冲区
+ * @param  rgbbuffer[OUT]   RGB缓冲区
+ * @param  width[IN]        图像宽
+ * @param  height[IN]       图像高
+ * 
+ * @return no
+ *
+ * @note
+ *         1.YUV422P格式YUV缓冲区大小为w * h * 2
+ *         2.rgbbuffer数据排序为RGB，如保存BMP，需要调整为BGR
+ */
+void yuv422p_to_rgb24(unsigned char* yuvbuffer, unsigned char* rgbbuffer, int width, int height);
 
-void init_yuv420_table(void);
-void yuv420_to_rgb24(unsigned char* yuvbuffer,unsigned char* rgbbuffer, int width, int height);
+/** 
+ * @brief YUV420P转RGB24(查表法)
+ * 
+ * @param yuvbuffer  YUV420P格式缓冲区
+ * @param rgbbuffer  RGB24格式缓冲区
+ * @param width      图像宽
+ * @param height     图像高
+ *
+ *
+ * @note
+ *        1、YUV420P格式YUV缓冲区大小为w * h * 3 / 2
+ *        2、rgbbuffer数据排序为RGB，如保存BMP，需要调整为BGR
+ */
+void yuv420p_to_rgb24(unsigned char* yuvbuffer,unsigned char* rgbbuffer, int width, int height);
 
-#ifdef YUV_DEBUG
-// yuv422 to rgb24
-int save_bmp1(const char* yuvfile, const char* bmpfile, int width, int height);
+/** 
+ * @brief YUV422SP转RGB24(查表法)
+ * 
+ * @param yuvbuffer  YUV422SP格式缓冲区
+ * @param rgbbuffer  RGB24格式缓冲区
+ * @param width      图像宽
+ * @param height     图像高
+ *
+ *
+ * @note
+ *        1、YUV422SP格式YUV缓冲区大小为w * h * 2
+ *        2、rgbbuffer数据排序为RGB，如保存BMP，需要调整为BGR
+ */
+void yuv422sp_to_rgb24(unsigned char* yuvbuffer,unsigned char* rgbbuffer, int width, int height);
 
-// yuv420 to rgb24
-int save_bmp2(const char* yuvfile, const char* bmpfile, int width, int height);
+// TODO：定义个好一点的值
+typedef enum
+{
+    Y = 0,
+    YUV420P = 1,
+    YUV422P = 2,
+    YUV444P = 3,
+	YUV422SP = 4,
+}YUV_TYPE;
 
-int yuv_test(int argc, char* argv[]);
-#endif
+/** 
+ * @brief YUV转RGB24(查表法)
+ * 
+ * @param type       YUV格式类型
+ * @param yuvbuffer  YUV格式缓冲区
+ * @param rgbbuffer  RGB24格式缓冲区
+ * @param width      图像宽
+ * @param height     图像高
+ *
+ * @return 0: OK -1: failed
+ *
+ * @note
+ *        1、YUV422 buffer: w * h * 2 YUV420 buffer: w * h * 3 / 2
+ *        2、rgbbuffer数据排序为RGB，如保存BMP，需要调整为BGR
+ */
+int yuv_to_rgb24(YUV_TYPE type, unsigned char* yuvbuffer,unsigned char* rgbbuffer, int width, int height);
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// todo
+void yuv422sp_to_yuv422p(unsigned char* yuv422sp, unsigned char* yuv422p, int width, int height);
+
+void yuv420sp_to_yuv420p(unsigned char* yuv420sp, unsigned char* yuv420p, int width, int height);
+
+
+/////////////////////////////////////////////////
+
+void yuv420_to_rgb24_1(unsigned char* yuv420, unsigned char* rgb, int width, int height);
+
+void yuv420_to_rgb24_2(unsigned char *yuv420, unsigned char *rgb24, int width, int height) ;
+
+void yuv420_to_rgb24_3(unsigned char* yuv, unsigned char* rgb, int width, int height);
 
 #ifdef __cplusplus
 }

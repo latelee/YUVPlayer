@@ -18,6 +18,7 @@ static BOOL g_iYuv422Init = FALSE;
 static BOOL g_iEndFile = FALSE;
 
 UINT Play(LPVOID pParam);
+void SwapRgb(BYTE* pRgb, INT nLen);
 
 // 用于应用程序“关于”菜单项的 CAboutDlg 对话框
 
@@ -640,23 +641,16 @@ void CYUVPlayerDlg::OnDropFiles(HDROP hDropInfo)
 void CYUVPlayerDlg::ShowOpenedFrame()
 {
     // 设置YUV格式
-    if (m_nYuvFormat == FMT_YUV420)    // YUV420
+    switch (m_nYuvFormat)
     {
-        if (!g_iYuv420Init)
-        {
-            init_yuv420_table();
-            g_iYuv420Init = TRUE;
-            m_iYuvSize = m_nWidth * m_nHeight * 3 / 2;
-        }
-    }
-    if (m_nYuvFormat == FMT_YUV422)    // YUV422
-    {
-        if (!g_iYuv422Init)
-        {
-            init_yuv422_table();
-            g_iYuv422Init = TRUE;
-            m_iYuvSize = m_nWidth * m_nHeight * 2;
-        }
+    case FMT_YUV420:
+        m_iYuvSize = m_nWidth * m_nHeight * 3 / 2;
+        break;
+    case FMT_YUV422:
+        m_iYuvSize = m_nWidth * m_nHeight * 2;
+        break;
+    default:
+        break;
     }
 
     m_iRgbSize = m_nWidth * m_nHeight * 3 + 54;
@@ -701,18 +695,10 @@ void CYUVPlayerDlg::ShowOpenedFrame()
     memcpy(m_pbRgbData+sizeof(BITMAPFILEHEADER), &m_bmInfo, sizeof(BITMAPINFOHEADER));
 
     // 再转换格式
-    switch (m_nYuvFormat)
-    {
-    case FMT_YUV420:
-        yuv420_to_rgb24((unsigned char *)m_pbYuvData, (unsigned char *)m_pbRgbData+54, m_nWidth, m_nHeight);
-        break;
-    case FMT_YUV422:
-        yuv422_to_rgb24((unsigned char *)m_pbYuvData, (unsigned char *)m_pbRgbData+54, m_nWidth, m_nHeight);
-        break;
-    default:
-        break;
-    }
-
+    yuv_to_rgb24((YUV_TYPE)m_nYuvFormat, (unsigned char *)m_pbYuvData, (unsigned char *)m_pbRgbData+54, m_nWidth, m_nHeight);
+    // rgb->bgr
+    SwapRgb((BYTE*)m_pbRgbData+54, m_iRgbSize-54);
+    //yuv420_to_rgb24((unsigned char *)m_pbYuvData, (unsigned char *)m_pbRgbData+54, m_nWidth, m_nHeight);
     // 显示
     ShowPicture((BYTE *)m_pbRgbData, m_iRgbSize);
 }
@@ -824,17 +810,10 @@ UINT Play(LPVOID pParam)
         memcpy(pWin->m_pbRgbData+sizeof(BITMAPFILEHEADER), &(pWin->m_bmInfo), sizeof(BITMAPINFOHEADER));
 
         // 再转换格式
-        switch (pWin->m_nYuvFormat)
-        {
-        case FMT_YUV420:
-            yuv420_to_rgb24((unsigned char *)pWin->m_pbYuvData, (unsigned char *)pWin->m_pbRgbData+54, pWin->m_nWidth, pWin->m_nHeight);
-            break;
-        case FMT_YUV422:
-            yuv422_to_rgb24((unsigned char *)pWin->m_pbYuvData, (unsigned char *)pWin->m_pbRgbData+54, pWin->m_nWidth, pWin->m_nHeight);
-            break;
-        default:
-            break;
-        }
+        yuv_to_rgb24((YUV_TYPE)pWin->m_nYuvFormat, (unsigned char *)pWin->m_pbYuvData, (unsigned char *)pWin->m_pbRgbData+54, pWin->m_nWidth, pWin->m_nHeight);
+        //yuv420_to_rgb24((unsigned char *)pWin->m_pbYuvData, (unsigned char *)pWin->m_pbRgbData+54, pWin->m_nWidth, pWin->m_nHeight);
+        // rgb->bgr
+        SwapRgb((BYTE*)pWin->m_pbRgbData+54, pWin->m_iRgbSize-54);
         // 显示
         pWin->ShowPicture((BYTE *)pWin->m_pbRgbData, pWin->m_iRgbSize);
 
@@ -853,4 +832,23 @@ UINT Play(LPVOID pParam)
     AfxEndThread(0);
 
     return 0;
+}
+
+void SwapRgb(BYTE* pRgb, INT nLen)
+{
+    BYTE tmp = 0;
+    for (int i = 0; i < nLen; i += 3*3)
+    {
+        tmp = pRgb[i];
+        pRgb[i] = pRgb[i + 2];
+        pRgb[i + 2] = tmp;
+
+        tmp = pRgb[i+3];
+        pRgb[i+3] = pRgb[i+3 + 2];
+        pRgb[i+3 + 2] = tmp;
+
+        tmp = pRgb[i+3+3];
+        pRgb[i+3+3] = pRgb[i+3+3+3 + 2];
+        pRgb[i+3+3 + 2] = tmp;
+    }
 }

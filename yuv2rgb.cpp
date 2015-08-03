@@ -356,14 +356,17 @@ int yuv_to_rgb24(YUV_TYPE type, unsigned char* yuvbuffer,unsigned char* rgbbuffe
 
     switch (type)
     {
-    case YUV420P:
+    case FMT_YUV420:
         yuv420p_to_rgb24(yuvbuffer, rgbbuffer, width, height);
         break;
-    case YUV422P:
+    case FMT_YUV422:
         yuv422p_to_rgb24(yuvbuffer, rgbbuffer, width, height);
         break;
-    case YUV422SP:
+    case FMT_NV16:
         yuv422sp_to_rgb24(yuvbuffer, rgbbuffer, width, height);
+        break;
+    case FMT_UYVY:
+        uyvy_to_rgb24(yuvbuffer, rgbbuffer, width, height);
         break;
     default:
         printf("unsupport yuv type!\n");
@@ -600,6 +603,47 @@ void yuv422_to_rgb24_1(unsigned char* yuv422, unsigned char* rgb, int width, int
     }
 }
 
+/**
+uyvy
+-->
+u0y0v0 ->r g b
+u0y1v0 -> r g b
+*/
+void uyvy_to_rgb24(unsigned char *yuv, unsigned char *rgb, int width, int height)
+{
+    int y, cb, cr;
+    int r, g, b;
+    int i = 0;
+    unsigned char* p;
+    unsigned char* p_u;
+    unsigned char* p_v;
+    unsigned char* p_rgb;
+
+    p = yuv;
+    p_rgb = rgb;
+    for (i = 0; i < width * height / 2; i++)
+    {
+        cb = p[0];
+        y  = p[1];
+        cr = p[2];
+        //yuv2rgb(y, cb, cr, &r, &g, &b);
+        YCbCrConvertToRGB(y, cb, cr, &r, &g, &b);
+        // 此处可调整RGB排序，BMP图片排序为BGR
+        p_rgb[0] = r;
+        p_rgb[1] = g;
+        p_rgb[2] = b;
+
+        y  = p[3];
+        //yuv2rgb(y, cb, cr, &r, &g, &b);
+        YCbCrConvertToRGB(y, cb, cr, &r, &g, &b);
+        p_rgb[3] = r;
+        p_rgb[4] = g;
+        p_rgb[5] = b;
+        p_rgb += 6;
+        p += 4;
+    }
+}
+
 /*
 y - y
 u - cb
@@ -807,11 +851,11 @@ void yuv_to_rgb24_1(unsigned char* yuv, unsigned char* rgb, int width, int heigh
 
     switch(type)
     {
-    case YUV420P:
+    case FMT_YUV420:
         chroma_v = 2;
         chroma_h = 2;
         break;
-    case YUV422P:
+    case FMT_YUV422:
         chroma_v = 4;
         chroma_h = 2;
         break;

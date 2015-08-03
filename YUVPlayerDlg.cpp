@@ -653,6 +653,7 @@ void CYUVPlayerDlg::ShowOpenedFrame()
         m_iYuvSize = m_nWidth * m_nHeight * 3 / 2;
         break;
     case FMT_YUV422:
+    case FMT_UYVY:
         m_iYuvSize = m_nWidth * m_nHeight * 2;
         break;
     default:
@@ -687,7 +688,7 @@ void CYUVPlayerDlg::ShowOpenedFrame()
     m_bmInfo.bmiHeader.biSize   = sizeof(BITMAPINFOHEADER);
     m_bmInfo.bmiHeader.biWidth  = m_nWidth;
     // note YUV420是倒过来的图像，难道其它的不是？
-    m_bmInfo.bmiHeader.biHeight = (m_nYuvFormat == FMT_YUV420) ? (-m_nHeight) : (m_nHeight);
+    m_bmInfo.bmiHeader.biHeight = -m_nHeight;//(m_nYuvFormat == FMT_YUV420) ? (-m_nHeight) : (m_nHeight);
     m_bmInfo.bmiHeader.biPlanes = 1;
     m_bmInfo.bmiHeader.biBitCount = 24;
     m_bmInfo.bmiHeader.biCompression = BI_RGB;
@@ -805,7 +806,7 @@ UINT Play(LPVOID pParam)
         pWin->m_bmHeader.bfOffBits = sizeof(BITMAPFILEHEADER) + sizeof(BITMAPINFOHEADER);
         pWin->m_bmInfo.bmiHeader.biSize   = sizeof(BITMAPINFOHEADER);
         pWin->m_bmInfo.bmiHeader.biWidth  = pWin->m_nWidth;
-        pWin->m_bmInfo.bmiHeader.biHeight = (pWin->m_nYuvFormat == FMT_YUV420) ? (-pWin->m_nHeight) : pWin->m_nHeight;    // YUV420是倒过来的图像
+        pWin->m_bmInfo.bmiHeader.biHeight = -pWin->m_nHeight;;//(pWin->m_nYuvFormat == FMT_YUV420) ? (-pWin->m_nHeight) : pWin->m_nHeight;    // YUV420是倒过来的图像
         pWin->m_bmInfo.bmiHeader.biPlanes = 1;
         pWin->m_bmInfo.bmiHeader.biBitCount = 24;
         pWin->m_bmInfo.bmiHeader.biCompression = BI_RGB;

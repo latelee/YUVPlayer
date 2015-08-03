@@ -8,15 +8,7 @@
 
 #define APP_NAM _T("YUV Player")
 
-// yuv格式宏定义
-#define FMT_Y       0
-#define FMT_YUV420  1
-#define FMT_YUV422  2
-#define FMT_YUV444  3
-#define FMT_YUYV    
-#define FMT_UYVY    
-#define FMT_NV12
-#define FMT_NV16
+
 
 #define MAX_URL_LENGTH 256
 typedef struct yuv_pic_tag

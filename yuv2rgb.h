@@ -104,14 +104,16 @@ void yuv420p_to_rgb24(unsigned char* yuvbuffer,unsigned char* rgbbuffer, int wid
  */
 void yuv422sp_to_rgb24(unsigned char* yuvbuffer,unsigned char* rgbbuffer, int width, int height);
 
-// TODO：定义个好一点的值
 typedef enum
 {
-    Y = 0,
-    YUV420P = 1,
-    YUV422P = 2,
-    YUV444P = 3,
-	YUV422SP = 4,
+    FMT_Y = 0,
+    FMT_YUV420 = 1,
+    FMT_YV12 = 2,
+    FMT_YUV422 = 3,
+    FMT_YV16 = 4,
+    FMT_YUV444 = 3,
+	FMT_NV16 = 4,
+    FMT_UYVY = 6,
 }YUV_TYPE;
 
 /** 
@@ -145,6 +147,8 @@ void yuv420_to_rgb24_1(unsigned char* yuv420, unsigned char* rgb, int width, int
 void yuv420_to_rgb24_2(unsigned char *yuv420, unsigned char *rgb24, int width, int height) ;
 
 void yuv420_to_rgb24_3(unsigned char* yuv, unsigned char* rgb, int width, int height);
+
+void uyvy_to_rgb24(unsigned char *yuv, unsigned char *rgb, int width, int height);
 
 #ifdef __cplusplus
 }

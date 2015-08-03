@@ -221,6 +221,7 @@ BOOL CYUVPlayerDlg::OnInitDialog()
     }
 
     m_fInit = TRUE;
+    m_fShowBlack = TRUE;
 	return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
 }
 
@@ -245,13 +246,18 @@ void CYUVPlayerDlg::OnPaint()
 {
 #if 01
     //picture控件背景色为黑色
-    CRect rtTop;
-    CStatic *pWnd = (CStatic*)GetDlgItem(IDC_VIDEO);
-    CDC *cDc = pWnd->GetDC();
-    pWnd->GetClientRect(&rtTop);
-    cDc->FillSolidRect(rtTop.left, rtTop.top, rtTop.Width(), rtTop.Height(),RGB(0,0,0));
-    Invalidate(FALSE);
+    if (m_fShowBlack)
+    {
+        CRect rtTop;
+        CStatic *pWnd = (CStatic*)GetDlgItem(IDC_VIDEO);
+        CDC *cDc = pWnd->GetDC();
+        pWnd->GetClientRect(&rtTop);
+        cDc->FillSolidRect(rtTop.left, rtTop.top, rtTop.Width(), rtTop.Height(),RGB(0,0,0));
+        Invalidate(FALSE);
+    }
 #endif
+
+    ShowPicture((BYTE *)m_pbRgbData, m_iRgbSize);
 
 	if (IsIconic())
 	{
@@ -724,6 +730,7 @@ inline void RenderBitmap(CWnd *pWnd, Bitmap* pbmp)
 // 显示图片
 void CYUVPlayerDlg::ShowPicture(BYTE* pbData, int iSize)
 {
+    if (pbData == NULL) return;
     CWnd* pWnd=GetDlgItem(IDC_VIDEO);   // IDC_VIDEO：picture contral 控件ID
     IStream* pPicture = NULL;
     CreateStreamOnHGlobal(NULL,TRUE,&pPicture);
@@ -740,6 +747,8 @@ void CYUVPlayerDlg::ShowPicture(BYTE* pbData, int iSize)
         pPicture->Release();
         pPicture = NULL;
     }
+
+    m_fShowBlack = FALSE;
 }
 
 // 播放线程

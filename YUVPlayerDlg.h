@@ -40,6 +40,7 @@ public:
 
 public:
     BOOL m_fInit;
+    BOOL m_fShowBlack;
 
     CSettingDlg* m_pSettingDlg;
     int m_nWidth;

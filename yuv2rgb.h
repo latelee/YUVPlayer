@@ -156,8 +156,12 @@ void yuv420_to_rgb24_3(unsigned char* yuv, unsigned char* rgb, int width, int he
 
 void yuv422packed_to_rgb24(YUV_TYPE type, unsigned char *yuv, unsigned char *rgb, int width, int height);
 
+void yuv4444_to_rgb24(unsigned char *yuv, unsigned char *rgb, int width, int height);
+
 // 高最好是10的整数倍
 void save_yuv_file(const char* filename, int width, int height, int type);
+
+void change_yuv_file(const char* filename, const char* file_out, int width, int height, int type);
 
 #ifdef __cplusplus
 }

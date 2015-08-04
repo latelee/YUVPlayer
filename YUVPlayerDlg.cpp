@@ -555,9 +555,11 @@ void CYUVPlayerDlg::OnBnClickedButtonSet()
 // todo:只能宽、高同时缩放
 void CYUVPlayerDlg::OnSize(UINT nType, int cx, int cy)
 {
+    if (!m_fInit) return;
+//    if (cx<=333 || cy <= 343) return;
+
     CDialogEx::OnSize(nType, cx, cy);
 
-    if (!m_fInit) return;
     CWnd *pWnd = GetDlgItem(IDC_VIDEO);
     if (pWnd)
     {
@@ -639,12 +641,17 @@ void CYUVPlayerDlg::OnDropFiles(HDROP hDropInfo)
     m_bLastFrame.EnableWindow(TRUE);
 
 
-#if 0
+#if 00
     save_yuv_file("YUV_yuyv.yuv", 320, 240, FMT_YUYV);
     save_yuv_file("YUV_yvyu.yuv", 320, 240, FMT_YVYU);
     save_yuv_file("YUV_uyvy.yuv", 320, 240, FMT_UYVY);
     save_yuv_file("YUV_vyuy.yuv", 320, 240, FMT_VYUY);
+    
+    save_yuv_file("YUV_yuv444.yuv", 320, 240, FMT_YUV444);
 #endif
+
+    //change_yuv_file("suzie_qcif_yuv420p_00.yuv", "suzie_qcif_sp.yuv", 176, 144, 0);
+    //change_yuv_file("suzie_qcif_sp.yuv", "suzie_qcif_p.yuv", 176, 144, 1);
 }
 
 /////////////////////////////
@@ -671,6 +678,9 @@ void CYUVPlayerDlg::ShowOpenedFrame()
     case FMT_NV16:
     case FMT_NV61:
         m_iYuvSize = m_nWidth * m_nHeight * 2;
+        break;
+    case FMT_YUV444:
+        m_iYuvSize = m_nWidth * m_nHeight * 3;
         break;
     default:
         break;

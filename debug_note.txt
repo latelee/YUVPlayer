@@ -38,16 +38,9 @@ Loop
 快捷键
 
 要支持的格式：
-Y;
-YUV420(I420);YV12;YUV422(I422);YV16;
-YUV444;
-UYVY;YUY2(YUYV);YVYU;
-NV12;NV21;NV16;NV61
+Y;YUV420(I420);YV12;YUV422(I422);YV16;YUV444;YUY2(YUYV);YVYU;UYVY;VYUY;NV12;NV21;NV16;NV61
 
 
 ==============================
 log 
 2015.8.2
-todo
-打开文件要按实际大小缩放窗口
-拖动窗口时，图像跟着变化

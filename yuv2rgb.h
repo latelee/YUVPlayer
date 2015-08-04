@@ -111,9 +111,15 @@ typedef enum
     FMT_YV12 = 2,
     FMT_YUV422 = 3,
     FMT_YV16 = 4,
-    FMT_YUV444 = 3,
-	FMT_NV16 = 4,
-    FMT_UYVY = 6,
+    FMT_YUV444 = 5,
+    FMT_YUYV = 6,
+    FMT_YVYU = 7,
+    FMT_UYVY = 8,
+    FMT_VYUY = 9,
+    FMT_NV12 = 10,
+    FMT_NV21 = 11,
+    FMT_NV16 = 12,
+    FMT_NV61 = 13,
 }YUV_TYPE;
 
 /** 
@@ -134,21 +140,24 @@ typedef enum
 int yuv_to_rgb24(YUV_TYPE type, unsigned char* yuvbuffer,unsigned char* rgbbuffer, int width, int height);
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-// todo
 void yuv422sp_to_yuv422p(unsigned char* yuv422sp, unsigned char* yuv422p, int width, int height);
 
 void yuv420sp_to_yuv420p(unsigned char* yuv420sp, unsigned char* yuv420p, int width, int height);
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+void swargb(unsigned char* rgb, int len);
 
-/////////////////////////////////////////////////
-
+////////////////////////////////////////////////////////////////////////////////////////////////////
 void yuv420_to_rgb24_1(unsigned char* yuv420, unsigned char* rgb, int width, int height);
 
 void yuv420_to_rgb24_2(unsigned char *yuv420, unsigned char *rgb24, int width, int height) ;
 
 void yuv420_to_rgb24_3(unsigned char* yuv, unsigned char* rgb, int width, int height);
 
-void uyvy_to_rgb24(unsigned char *yuv, unsigned char *rgb, int width, int height);
+void yuv422packed_to_rgb24(YUV_TYPE type, unsigned char *yuv, unsigned char *rgb, int width, int height);
+
+// 高最好是10的整数倍
+void save_yuv_file(const char* filename, int width, int height, int type);
 
 #ifdef __cplusplus
 }

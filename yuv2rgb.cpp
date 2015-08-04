@@ -365,8 +365,11 @@ int yuv_to_rgb24(YUV_TYPE type, unsigned char* yuvbuffer,unsigned char* rgbbuffe
     case FMT_NV16:
         yuv422sp_to_rgb24(yuvbuffer, rgbbuffer, width, height);
         break;
+    case FMT_YUYV:
+    case FMT_YVYU:
     case FMT_UYVY:
-        uyvy_to_rgb24(yuvbuffer, rgbbuffer, width, height);
+    case FMT_VYUY:
+        yuv422packed_to_rgb24(type, yuvbuffer, rgbbuffer, width, height);
         break;
     default:
         printf("unsupport yuv type!\n");
@@ -550,7 +553,7 @@ void YCbCrConvertToRGB(int Y, int Cb, int Cr, int* R, int* G, int* B)
     *G = (int)RANGE_INT(iTmpG, 0, 255);  
     *B = (int)RANGE_INT(iTmpB, 0, 255);  
     //printf("--%d %d %d %d %d %d--\n", iTmpR, iTmpG, iTmpB, *R, *G, *B);
-} 
+}
 #endif
 
 /*
@@ -608,8 +611,10 @@ uyvy
 -->
 u0y0v0 ->r g b
 u0y1v0 -> r g b
+
+...
 */
-void uyvy_to_rgb24(unsigned char *yuv, unsigned char *rgb, int width, int height)
+void yuv422packed_to_rgb24(YUV_TYPE type, unsigned char *yuv, unsigned char *rgb, int width, int height)
 {
     int y, cb, cr;
     int r, g, b;
@@ -623,9 +628,32 @@ void uyvy_to_rgb24(unsigned char *yuv, unsigned char *rgb, int width, int height
     p_rgb = rgb;
     for (i = 0; i < width * height / 2; i++)
     {
-        cb = p[0];
-        y  = p[1];
-        cr = p[2];
+        switch(type)
+        {
+        case FMT_YUYV:
+            y  = p[0];
+            cb = p[1];
+            cr = p[3];
+            break;
+        case FMT_YVYU:
+            y  = p[0];
+            cr = p[1];
+            cb = p[3];
+            break;
+        case FMT_UYVY:
+            cb = p[0];
+            y  = p[1];
+            cr = p[2];
+            break;
+        case FMT_VYUY:
+            cr = p[0];
+            y  = p[1];
+            cb = p[2];
+            break;
+        default:
+            break;
+        }
+
         //yuv2rgb(y, cb, cr, &r, &g, &b);
         YCbCrConvertToRGB(y, cb, cr, &r, &g, &b);
         // 此处可调整RGB排序，BMP图片排序为BGR
@@ -633,7 +661,20 @@ void uyvy_to_rgb24(unsigned char *yuv, unsigned char *rgb, int width, int height
         p_rgb[1] = g;
         p_rgb[2] = b;
 
-        y  = p[3];
+        switch(type)
+        {
+        case FMT_YUYV:
+        case FMT_YVYU:
+            y  = p[2];
+            break;
+        case FMT_UYVY:
+        case FMT_VYUY:
+            y  = p[3];
+            break;
+        default:
+            break;
+        }
+
         //yuv2rgb(y, cb, cr, &r, &g, &b);
         YCbCrConvertToRGB(y, cb, cr, &r, &g, &b);
         p_rgb[3] = r;
@@ -895,4 +936,128 @@ void yuv_to_rgb24_1(unsigned char* yuv, unsigned char* rgb, int width, int heigh
         p_v += 1;
         p_rgb += 6;
     }
+}
+
+////////////////////////////////
+
+void swargb(unsigned char* rgb, int len)
+{
+    BYTE tmp = 0;
+    for (int i = 0; i < len; i += 3*3)
+    {
+        tmp = rgb[i];
+        rgb[i] = rgb[i + 2];
+        rgb[i + 2] = tmp;
+
+        tmp = rgb[i+3];
+        rgb[i+3] = rgb[i+3 + 2];
+        rgb[i+3 + 2] = tmp;
+
+        tmp = rgb[i+3+3];
+        rgb[i+3+3] = rgb[i+3+3+3 + 2];
+        rgb[i+3+3 + 2] = tmp;
+    }
+}
+
+/////////////////////////////
+// 方便从rgb转为yuv
+int rgb2YCbCr(unsigned int rgbColor, int* Y, int* Cb, int* Cr)
+{
+    unsigned char r, g, b;
+    int y, cb, cr;
+    r = (rgbColor&0x00ff0000) >> 16;
+    g = (rgbColor&0x0000ff00) >> 8;
+    b = rgbColor & 0xff;
+
+    y = (int)( 0.299 * r + 0.587 * g + 0.114 * b);
+    cb = (int)(-0.16874 * r - 0.33126 * g + 0.50000 * b + 128);
+    if (cb < 0)
+        cb = 0;
+    cr = (int)( 0.50000 * r - 0.41869 * g - 0.08131 * b + 128);
+    if (cr < 0)
+        cr = 0;
+
+    *Y = y;
+    *Cb = cb;
+    *Cr = cr;
+
+    return 0;
+}
+/// 填充YUV数据，格式：YUYV UYVY VYUY
+void init_uyvy_buf(YUV_TYPE type, unsigned char* buf, int width, int height)
+{
+    unsigned char *src = buf;
+    int i, j;
+
+    /*
+    unsigned int rainbow_rgb[] = {
+        0xFF0000, 0xFF6100, 0xFFFF00, 0x00FF00, 0x00FFFF,
+        0x0000FF, 0xA020F0, 0x000000, 0xFFFFFF, 0xF4A460};
+    */
+    // 由上数组转换而成
+    unsigned int rainbow_yuv[] = {
+        0x4c54ff, 0x8534d6, 0xe10094, 0x952b15, 0xb2ab00,
+        0x1dff6b, 0x5dd2af, 0xbb1654, 0x9c4bc5, 0xb450ad};
+
+    int slice = height / 10;
+    for (i = 0; i < height; i++) // h
+    {
+        int index = i / slice;
+        unsigned char y = (rainbow_yuv[index] & 0xff0000 ) >> 16;
+        unsigned char u = (rainbow_yuv[index] & 0x00ff00) >> 8;
+        unsigned char v = (rainbow_yuv[index] & 0x0000ff);
+        for (j=0; j<width*2; j+=4) // w
+        {
+            if (type == FMT_YUYV)
+            {
+                src[i*width*2+j+0] = y; // Y0
+                src[i*width*2+j+1] = u; // U
+                src[i*width*2+j+2] = y; // Y1
+                src[i*width*2+j+3] = v; // V
+            }
+            if (type == FMT_YVYU)
+            {
+                src[i*width*2+j+0] = y; // Y0
+                src[i*width*2+j+1] = v; // V
+                src[i*width*2+j+2] = y; // Y1
+                src[i*width*2+j+3] = u; // U
+            }
+            else if (type == FMT_UYVY)
+            {
+                src[i*width*2+j+0] = u; // U
+                src[i*width*2+j+1] = y; // Y0
+                src[i*width*2+j+2] = v; // V
+                src[i*width*2+j+3] = y; // Y1
+            }
+            else if (type == FMT_VYUY)
+            {
+                src[i*width*2+j+0] = v; // V
+                src[i*width*2+j+1] = y; // Y0
+                src[i*width*2+j+2] = u; // U
+                src[i*width*2+j+3] = y; // Y1
+            }
+        }
+    }
+}
+
+void save_yuv_file(const char* filename, int width, int height, int type)
+{
+    FILE* fp;
+    //int width = 320;
+    //int height = 240;
+    int len = width*height*2;
+    unsigned char* yuv_buf = NULL;
+
+
+    yuv_buf = (unsigned char*)malloc(len);
+    memset(yuv_buf, '\0', len);
+
+    init_uyvy_buf((YUV_TYPE)type, yuv_buf, width, height);
+
+    fp = fopen(filename, "w");
+
+    fwrite(yuv_buf, 1, len, fp);
+
+    fclose(fp);
+    free(yuv_buf);
 }

@@ -18,7 +18,6 @@ static BOOL g_iYuv422Init = FALSE;
 static BOOL g_iEndFile = FALSE;
 
 UINT Play(LPVOID pParam);
-void SwapRgb(BYTE* pRgb, INT nLen);
 
 // 用于应用程序“关于”菜单项的 CAboutDlg 对话框
 
@@ -638,6 +637,14 @@ void CYUVPlayerDlg::OnDropFiles(HDROP hDropInfo)
     m_bNextFrame.EnableWindow(TRUE);
     m_bFirstFrame.EnableWindow(TRUE);
     m_bLastFrame.EnableWindow(TRUE);
+
+
+#if 0
+    save_yuv_file("YUV_yuyv.yuv", 320, 240, FMT_YUYV);
+    save_yuv_file("YUV_yvyu.yuv", 320, 240, FMT_YVYU);
+    save_yuv_file("YUV_uyvy.yuv", 320, 240, FMT_UYVY);
+    save_yuv_file("YUV_vyuy.yuv", 320, 240, FMT_VYUY);
+#endif
 }
 
 /////////////////////////////
@@ -650,10 +657,19 @@ void CYUVPlayerDlg::ShowOpenedFrame()
     switch (m_nYuvFormat)
     {
     case FMT_YUV420:
+    case FMT_YV12:
+    case FMT_NV12:
+    case FMT_NV21:
         m_iYuvSize = m_nWidth * m_nHeight * 3 / 2;
         break;
     case FMT_YUV422:
+    case FMT_YV16:
+    case FMT_YUYV:
+    case FMT_YVYU:
     case FMT_UYVY:
+    case FMT_VYUY:
+    case FMT_NV16:
+    case FMT_NV61:
         m_iYuvSize = m_nWidth * m_nHeight * 2;
         break;
     default:
@@ -687,8 +703,8 @@ void CYUVPlayerDlg::ShowOpenedFrame()
     m_bmHeader.bfOffBits = sizeof(BITMAPFILEHEADER) + sizeof(BITMAPINFOHEADER);
     m_bmInfo.bmiHeader.biSize   = sizeof(BITMAPINFOHEADER);
     m_bmInfo.bmiHeader.biWidth  = m_nWidth;
-    // note YUV420是倒过来的图像，难道其它的不是？
-    m_bmInfo.bmiHeader.biHeight = -m_nHeight;//(m_nYuvFormat == FMT_YUV420) ? (-m_nHeight) : (m_nHeight);
+    // note BMP图像是倒过来的
+    m_bmInfo.bmiHeader.biHeight = -m_nHeight;
     m_bmInfo.bmiHeader.biPlanes = 1;
     m_bmInfo.bmiHeader.biBitCount = 24;
     m_bmInfo.bmiHeader.biCompression = BI_RGB;
@@ -704,7 +720,7 @@ void CYUVPlayerDlg::ShowOpenedFrame()
     // 再转换格式
     yuv_to_rgb24((YUV_TYPE)m_nYuvFormat, (unsigned char *)m_pbYuvData, (unsigned char *)m_pbRgbData+54, m_nWidth, m_nHeight);
     // rgb->bgr
-    SwapRgb((BYTE*)m_pbRgbData+54, m_iRgbSize-54);
+    swargb((BYTE*)m_pbRgbData+54, m_iRgbSize-54);
     //yuv420_to_rgb24((unsigned char *)m_pbYuvData, (unsigned char *)m_pbRgbData+54, m_nWidth, m_nHeight);
     // 显示
     ShowPicture((BYTE *)m_pbRgbData, m_iRgbSize);
@@ -806,7 +822,8 @@ UINT Play(LPVOID pParam)
         pWin->m_bmHeader.bfOffBits = sizeof(BITMAPFILEHEADER) + sizeof(BITMAPINFOHEADER);
         pWin->m_bmInfo.bmiHeader.biSize   = sizeof(BITMAPINFOHEADER);
         pWin->m_bmInfo.bmiHeader.biWidth  = pWin->m_nWidth;
-        pWin->m_bmInfo.bmiHeader.biHeight = -pWin->m_nHeight;;//(pWin->m_nYuvFormat == FMT_YUV420) ? (-pWin->m_nHeight) : pWin->m_nHeight;    // YUV420是倒过来的图像
+        // note BMP图像是倒过来的
+        pWin->m_bmInfo.bmiHeader.biHeight = -pWin->m_nHeight;;
         pWin->m_bmInfo.bmiHeader.biPlanes = 1;
         pWin->m_bmInfo.bmiHeader.biBitCount = 24;
         pWin->m_bmInfo.bmiHeader.biCompression = BI_RGB;
@@ -823,7 +840,7 @@ UINT Play(LPVOID pParam)
         yuv_to_rgb24((YUV_TYPE)pWin->m_nYuvFormat, (unsigned char *)pWin->m_pbYuvData, (unsigned char *)pWin->m_pbRgbData+54, pWin->m_nWidth, pWin->m_nHeight);
         //yuv420_to_rgb24((unsigned char *)pWin->m_pbYuvData, (unsigned char *)pWin->m_pbRgbData+54, pWin->m_nWidth, pWin->m_nHeight);
         // rgb->bgr
-        SwapRgb((BYTE*)pWin->m_pbRgbData+54, pWin->m_iRgbSize-54);
+        swargb((BYTE*)pWin->m_pbRgbData+54, pWin->m_iRgbSize-54);
         // 显示
         pWin->ShowPicture((BYTE *)pWin->m_pbRgbData, pWin->m_iRgbSize);
 
@@ -842,23 +859,4 @@ UINT Play(LPVOID pParam)
     AfxEndThread(0);
 
     return 0;
-}
-
-void SwapRgb(BYTE* pRgb, INT nLen)
-{
-    BYTE tmp = 0;
-    for (int i = 0; i < nLen; i += 3*3)
-    {
-        tmp = pRgb[i];
-        pRgb[i] = pRgb[i + 2];
-        pRgb[i + 2] = tmp;
-
-        tmp = pRgb[i+3];
-        pRgb[i+3] = pRgb[i+3 + 2];
-        pRgb[i+3 + 2] = tmp;
-
-        tmp = pRgb[i+3+3];
-        pRgb[i+3+3] = pRgb[i+3+3+3 + 2];
-        pRgb[i+3+3 + 2] = tmp;
-    }
 }

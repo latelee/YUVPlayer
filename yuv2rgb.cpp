@@ -110,12 +110,24 @@ void yuv422p_to_rgb24(YUV_TYPE type, unsigned char* yuv422p, unsigned char* rgb,
         p_rgb += 6;
     }
 }
+
 /**
-uyvy
--->
+内存分布
+                    w
+            +---------------------+
+            |Y0U0V0Y1U1V1Y2U2V2...|
+            |...                  |   h
+            |...                  |
+            |                     |
+            |YxUxVxYxUxVx         |
+            |...                  |   h
+            |...                  |
+            |                     |
+            +---------------------+
+                
+转换：
 u0y0v0 ->r0 g0 b0
 u0y1v0 -> r1 g1 b1
-
 其它类型类似...
 */
 void yuv422packed_to_rgb24(YUV_TYPE type, unsigned char* yuv422p, unsigned char* rgb, int width, int height)
@@ -722,7 +734,7 @@ void yuv422p_to_yuv422sp(unsigned char* yuv422p, unsigned char* yuv422sp, int wi
     for (j = 0, i = 0; j < uv_size; j+=2, i++)
     {
 	// 此处可调整U、V的位置，变成NV16或NV61
-#if 0
+#if 01
         p_uv[j] = p_u[i];
         p_uv[j+1] = p_v[i];
 #else
@@ -790,7 +802,7 @@ void yuv420p_to_yuv420sp(unsigned char* yuv420p, unsigned char* yuv420sp, int wi
     for (j = 0, i = 0; j < y_size/2; j+=2, i++)
     {
 	// 此处可调整U、V的位置，变成NV12或NV21
-#if 0
+#if 01
         uv_tmp[j] = u[i];
         uv_tmp[j+1] = v[i];
 #else
@@ -1346,7 +1358,7 @@ int rgb2YCbCr(unsigned int rgbColor, int* Y, int* Cb, int* Cr)
 
     return 0;
 }
-/// 填充YUV数据，支持格式：YUYV UYVY VYUY
+/// 填充YUV数据，支持格式：YUV444 YUYV UYVY VYUY
 void init_yuv_buf(YUV_TYPE type, unsigned char* buf, int width, int height)
 {
     unsigned char *src = buf;
@@ -1362,9 +1374,9 @@ void init_yuv_buf(YUV_TYPE type, unsigned char* buf, int width, int height)
         0x4c54ff, 0x8534d6, 0xe10094, 0x952b15, 0xb2ab00,
         0x1dff6b, 0x5dd2af, 0xbb1654, 0x9c4bc5, 0xb450ad};
 
-        unsigned char *p_y = src;
-        unsigned char *p_u = src+width*height;
-        unsigned char *p_v = src+2*width*height;
+    unsigned char *p_y = src;
+    unsigned char *p_u = src+width*height;
+    unsigned char *p_v = src+2*width*height;
 
     int slice = height / 10;
     for (i = 0; i < height; i++) // h

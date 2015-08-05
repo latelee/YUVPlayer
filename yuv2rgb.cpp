@@ -246,8 +246,9 @@ void yuv420p_to_rgb24(unsigned char* yuvbuffer,unsigned char* rgbbuffer, int wid
             |                    |
             +--------------------+
                 w/2
+UV交织为NV12，VU交织为NV21
 */
-void yuv422sp_to_rgb24(unsigned char* yuv422sp, unsigned char* rgb, int width, int height)
+void yuv422sp_to_rgb24(YUV_TYPE type, unsigned char* yuv422sp, unsigned char* rgb, int width, int height)
 {
     int y, cb, cr;
     int r, g, b;
@@ -270,8 +271,16 @@ void yuv422sp_to_rgb24(unsigned char* yuv422sp, unsigned char* rgb, int width, i
     for (i = 0; i < width * height / 2; i++)
     {
         y  = p_y[0];
-        cb = p_uv[0];
-        cr = p_uv[1];    // v紧跟u，在u的下一个位置
+        if (type ==  FMT_NV16)
+        {
+            cb = p_uv[0];
+            cr = p_uv[1];    // v紧跟u，在u的下一个位置
+        }
+        if (type == FMT_NV61)
+        {
+            cr = p_uv[0];
+            cb = p_uv[1];    // u紧跟v，在v的下一个位置
+        }
 
         r = MAX (0, MIN (255, (V[cr] + Y1[y])/10000));   //R value
         b = MAX (0, MIN (255, (U[cb] + Y1[y])/10000));   //B value
@@ -284,8 +293,17 @@ void yuv422sp_to_rgb24(unsigned char* yuv422sp, unsigned char* rgb, int width, i
         p_rgb[2] = b;
 
         y  = p_y[1];
-        cb = p_uv[0];
-        cr = p_uv[1];
+        if (type ==  FMT_NV16)
+        {
+            cb = p_uv[0];
+            cr = p_uv[1];
+        }
+        if (type ==  FMT_NV61)
+        {
+            cr = p_uv[0];
+            cb = p_uv[1];
+        }
+
         r = MAX (0, MIN (255, (V[cr] + Y1[y])/10000));   //R value
         b = MAX (0, MIN (255, (U[cb] + Y1[y])/10000));   //B value
         g = MAX (0, MIN (255, (Y2[y] - 5094*(r) - 1942*(b))/10000)); //G value
@@ -300,6 +318,7 @@ void yuv422sp_to_rgb24(unsigned char* yuv422sp, unsigned char* rgb, int width, i
     }
 }
 
+// 对外接口
 int yuv_to_rgb24(YUV_TYPE type, unsigned char* yuvbuffer,unsigned char* rgbbuffer, int width, int height)
 {
     int ret = 0;
@@ -309,11 +328,12 @@ int yuv_to_rgb24(YUV_TYPE type, unsigned char* yuvbuffer,unsigned char* rgbbuffe
     case FMT_YUV420:
         yuv420p_to_rgb24(yuvbuffer, rgbbuffer, width, height);
         break;
+    case FMT_YV12:
+        break;
     case FMT_YUV422:
         yuv422p_to_rgb24(yuvbuffer, rgbbuffer, width, height);
         break;
-    case FMT_NV16:
-        yuv422sp_to_rgb24(yuvbuffer, rgbbuffer, width, height);
+    case FMT_YV16:
         break;
     case FMT_YUYV:
     case FMT_YVYU:
@@ -321,11 +341,19 @@ int yuv_to_rgb24(YUV_TYPE type, unsigned char* yuvbuffer,unsigned char* rgbbuffe
     case FMT_VYUY:
         yuv422packed_to_rgb24(type, yuvbuffer, rgbbuffer, width, height);
         break;
+    case FMT_NV12:
+        break;
+    case FMT_NV21:
+        break;
+    case FMT_NV16:
+    case FMT_NV61:
+        yuv422sp_to_rgb24(type, yuvbuffer, rgbbuffer, width, height);
+        break;
     case FMT_YUV444:
         yuv4444_to_rgb24(yuvbuffer, rgbbuffer, width, height);
         break;
     default:
-        printf("unsupport yuv type!\n");
+        printf("unsupported yuv type!\n");
         ret = -1;
         break;
     }
@@ -576,32 +604,30 @@ int yuv2rgb(int Y, int Cb, int Cr, int* r, int* g, int* b)
     return 0;
 }
 
-#if 01
-#define RANGE_INT(iVal, iMin, iMax)                     ( ( ( iVal ) > ( iMin ) ) ? ( ( ( iVal ) <= ( iMax ) ) ? ( iVal ) : ( iMax ) ) : ( iMin ) )  
-#define ROUND_SHR_POSITIVE(Dividend, iShiftRightCount)  ( ( ( Dividend ) & ( 1 << ( ( iShiftRightCount ) - 1 ) ) ) ? ( ( Dividend ) >> ( iShiftRightCount ) ) + 1 : ( ( Dividend ) >> ( iShiftRightCount ) ) )  
-#define ROUND_SHR_NEGATIVE(Dividend, iShiftRightCount)  ( -( ( ( -( Dividend ) ) & ( 1 << ( ( iShiftRightCount ) - 1 ) ) ) ? ( ( -( Dividend ) ) >> ( iShiftRightCount ) ) + 1 : ( ( -( Dividend ) ) >> ( iShiftRightCount ) ) ) )  
-#define ROUND_SHR(Dividend, iShiftRightCount)           ( ( ( Dividend ) >= 0 ) ? ROUND_SHR_POSITIVE( Dividend, iShiftRightCount ) : ROUND_SHR_NEGATIVE( Dividend, iShiftRightCount ) )  
+#define RANGE(val, min, max)    (((val) > (min)) ? (((val) <= (max)) ? (val) : (max)) : (min))
+#define SHR_P(d, c)             (((d ) & (1<< ((c) - 1 ))) ? ((d) >> (c)) + 1 : ((d) >> (c)))
+#define SHR_N(d, c)             (-(((-(d)) & (1 << ((c) - 1))) ? ((-(d)) >> (c)) + 1 : ((-(d)) >> (c))))
+#define SHR(d, c)               (((d)>=0) ? SHR_P(d, c) : SHR_N(d, c))
 
-void YCbCrConvertToRGB(int Y, int Cb, int Cr, int* R, int* G, int* B)  
+void yuv2rgb_1(int y, int cb, int cr, int* r, int* g, int* b)  
 {  
-    int iTmpR = 0;  
-    int iTmpG = 0;  
-    int iTmpB = 0;  
+    int r_tmp = 0;  
+    int g_tmp = 0;  
+    int b_tmp = 0;  
 
-    iTmpR = (((int)Y) << 14) + 22970*(((int)Cr) - 128);  
-    iTmpG = (((int)Y) << 14) -  5638*(((int)Cb) - 128) - 11700*(((int)Cr) - 128);  
-    iTmpB = (((int)Y) << 14) + 29032*(((int)Cb) - 128);  
+    r_tmp = (((int)y) << 14) + 22970*(((int)cr) - 128);  
+    g_tmp = (((int)y) << 14) -  5638*(((int)cb) - 128) - 11700*(((int)cr) - 128);  
+    b_tmp = (((int)y) << 14) + 29032*(((int)cb) - 128);  
 
-    iTmpR = ROUND_SHR(iTmpR, 14);  
-    iTmpG = ROUND_SHR(iTmpG, 14);  
-    iTmpB = ROUND_SHR(iTmpB, 14);  
+    r_tmp = SHR(r_tmp, 14);  
+    g_tmp = SHR(g_tmp, 14);  
+    b_tmp = SHR(b_tmp, 14);  
 
-    *R = (int)RANGE_INT(iTmpR, 0, 255);  
-    *G = (int)RANGE_INT(iTmpG, 0, 255);  
-    *B = (int)RANGE_INT(iTmpB, 0, 255);  
-    //printf("--%d %d %d %d %d %d--\n", iTmpR, iTmpG, iTmpB, *R, *G, *B);
+    *r = (int)RANGE(r_tmp, 0, 255);  
+    *g = (int)RANGE(g_tmp, 0, 255);  
+    *b = (int)RANGE(b_tmp, 0, 255);  
+    //printf("--%d %d %d %d %d %d--\n", r_tmp, g_tmp, b_tmp, *r, *g, *b);
 }
-#endif
 
 /*
 y - y
@@ -631,7 +657,7 @@ void yuv422_to_rgb24_1(unsigned char* yuv422, unsigned char* rgb, int width, int
         cb = p_u[0];
         cr = p_v[0];
         //yuv2rgb(y, cb, cr, &r, &g, &b);
-        YCbCrConvertToRGB(y, cb, cr, &r, &g, &b);
+        yuv2rgb_1(y, cb, cr, &r, &g, &b);
         // 此处可调整RGB排序，BMP图片排序为BGR
         p_rgb[0] = r;
         p_rgb[1] = g;
@@ -641,7 +667,7 @@ void yuv422_to_rgb24_1(unsigned char* yuv422, unsigned char* rgb, int width, int
         cb = p_u[0];
         cr = p_v[0];
         //yuv2rgb(y, cb, cr, &r, &g, &b);
-        YCbCrConvertToRGB(y, cb, cr, &r, &g, &b);
+        yuv2rgb_1(y, cb, cr, &r, &g, &b);
         p_rgb[3] = r;
         p_rgb[4] = g;
         p_rgb[5] = b;
@@ -702,7 +728,7 @@ void yuv422packed_to_rgb24(YUV_TYPE type, unsigned char *yuv, unsigned char *rgb
         }
 
         //yuv2rgb(y, cb, cr, &r, &g, &b);
-        YCbCrConvertToRGB(y, cb, cr, &r, &g, &b);
+        yuv2rgb_1(y, cb, cr, &r, &g, &b);
         // 此处可调整RGB排序，BMP图片排序为BGR
         p_rgb[0] = r;
         p_rgb[1] = g;
@@ -723,7 +749,7 @@ void yuv422packed_to_rgb24(YUV_TYPE type, unsigned char *yuv, unsigned char *rgb
         }
 
         //yuv2rgb(y, cb, cr, &r, &g, &b);
-        YCbCrConvertToRGB(y, cb, cr, &r, &g, &b);
+        yuv2rgb_1(y, cb, cr, &r, &g, &b);
         p_rgb[3] = r;
         p_rgb[4] = g;
         p_rgb[5] = b;
@@ -760,7 +786,7 @@ void yuv4444_to_rgb24(unsigned char *yuv, unsigned char *rgb, int width, int hei
         cb = p_u[0];
         cr = p_v[0];
         //yuv2rgb(y, cb, cr, &r, &g, &b);
-        YCbCrConvertToRGB(y, cb, cr, &r, &g, &b);
+        yuv2rgb_1(y, cb, cr, &r, &g, &b);
         // 此处可调整RGB排序，BMP图片排序为BGR
         p_rgb[0] = r;
         p_rgb[1] = g;
@@ -800,7 +826,7 @@ void yuv420_to_rgb24_1(unsigned char* yuv420, unsigned char* rgb, int width, int
         cb = p_u[0];
         cr = p_v[0];
         yuv2rgb(y, cb, cr, &r, &g, &b);
-        //YCbCrConvertToRGB(y, cb, cr, &r, &g, &b);
+        //yuv2rgb_1(y, cb, cr, &r, &g, &b);
         // 此处可调整RGB排序，BMP图片排序为BGR
         p_rgb[0] = r;
         p_rgb[1] = g;
@@ -810,7 +836,7 @@ void yuv420_to_rgb24_1(unsigned char* yuv420, unsigned char* rgb, int width, int
         cb = p_u[0];
         cr = p_v[0];
         yuv2rgb(y, cb, cr, &r, &g, &b);
-        //YCbCrConvertToRGB(y, cb, cr, &r, &g, &b);
+        //yuv2rgb_1(y, cb, cr, &r, &g, &b);
         p_rgb[3] = r;
         p_rgb[4] = g;
         p_rgb[5] = b;
@@ -857,7 +883,7 @@ void yuv420_to_rgb24_2(unsigned char *yuv420, unsigned char *rgb24, int width, i
             */
 
             yuv2rgb(Y, U, V, &R, &G, &B);
-            //YCbCrConvertToRGB(Y, U, V, &R, &G, &B);
+            //yuv2rgb_1(Y, U, V, &R, &G, &B);
             //防止越界
             if (R>255)R=255;
             if (R<0)R=0;

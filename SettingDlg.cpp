@@ -15,7 +15,7 @@ CSettingDlg::CSettingDlg(CWnd* pParent /*=NULL*/)
 	: CDialogEx(CSettingDlg::IDD, pParent)
 {
     m_pParentWnd = NULL;
-    m_strAddedSize = _T("160x120;176x144;320x240;352x288;640x480;704x576");
+    m_strAddedSize = _T("160x120;176x144;320x240;352x288;640x480;704x576;1600x1200;1920x1080;3072x2048");
     m_nWidth = 176;
     m_nHeight = 144;
     m_nFps = 30;

@@ -58,6 +58,24 @@
 extern "C" {
 #endif
 
+typedef enum
+{
+    FMT_Y = 0,
+    FMT_YUV420 = 1,
+    FMT_YV12 = 2,
+    FMT_YUV422 = 3,
+    FMT_YV16 = 4,
+    FMT_YUV444 = 5,
+    FMT_YUYV = 6,
+    FMT_YVYU = 7,
+    FMT_UYVY = 8,
+    FMT_VYUY = 9,
+    FMT_NV12 = 10,
+    FMT_NV21 = 11,
+    FMT_NV16 = 12,
+    FMT_NV61 = 13,
+}YUV_TYPE;
+
 /**
  * @brief  YUV422P转换为RGB24(查表法)
  * 
@@ -104,24 +122,6 @@ void yuv420p_to_rgb24(unsigned char* yuvbuffer,unsigned char* rgbbuffer, int wid
  */
 void yuv422sp_to_rgb24(unsigned char* yuvbuffer,unsigned char* rgbbuffer, int width, int height);
 
-typedef enum
-{
-    FMT_Y = 0,
-    FMT_YUV420 = 1,
-    FMT_YV12 = 2,
-    FMT_YUV422 = 3,
-    FMT_YV16 = 4,
-    FMT_YUV444 = 5,
-    FMT_YUYV = 6,
-    FMT_YVYU = 7,
-    FMT_UYVY = 8,
-    FMT_VYUY = 9,
-    FMT_NV12 = 10,
-    FMT_NV21 = 11,
-    FMT_NV16 = 12,
-    FMT_NV61 = 13,
-}YUV_TYPE;
-
 /** 
  * @brief YUV转RGB24(查表法)
  * 
@@ -142,7 +142,7 @@ int yuv_to_rgb24(YUV_TYPE type, unsigned char* yuvbuffer,unsigned char* rgbbuffe
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 void yuv422sp_to_yuv422p(unsigned char* yuv422sp, unsigned char* yuv422p, int width, int height);
 
-void yuv420sp_to_yuv420p(unsigned char* yuv420sp, unsigned char* yuv420p, int width, int height);
+void yuv420sp_to_rgb24(YUV_TYPE type, unsigned char* yuv420sp, unsigned char* yuv420p, int width, int height);
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 void swargb(unsigned char* rgb, int len);

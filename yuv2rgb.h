@@ -79,6 +79,7 @@ typedef enum
 /**
  * @brief  YUV422P转换为RGB24(查表法)
  * 
+ * @param  type[IN]          YUV格式类型
  * @param  yuvbuffer[IN]    YUV422P平面格式缓冲区
  * @param  rgbbuffer[OUT]   RGB缓冲区
  * @param  width[IN]        图像宽
@@ -90,11 +91,45 @@ typedef enum
  *         1.YUV422P格式YUV缓冲区大小为w * h * 2
  *         2.rgbbuffer数据排序为RGB，如保存BMP，需要调整为BGR
  */
-void yuv422p_to_rgb24(unsigned char* yuvbuffer, unsigned char* rgbbuffer, int width, int height);
+void yuv422p_to_rgb24(YUV_TYPE type, unsigned char* yuvbuffer, unsigned char* rgbbuffer, int width, int height);
+
+/**
+ * @brief  YUV422P打包格式转换为RGB24(查表法)
+ * 
+ * @param  type[IN]         YUV格式类型
+ * @param  yuvbuffer[IN]    YUV422P打包格式缓冲区
+ * @param  rgbbuffer[OUT]   RGB缓冲区
+ * @param  width[IN]        图像宽
+ * @param  height[IN]       图像高
+ * 
+ * @return no
+ *
+ * @note
+ *         1.YUV422P格式YUV缓冲区大小为w * h * 2，支持YUYV、YVYU、UYVY、VYUY
+ *         2.rgbbuffer数据排序为RGB，如保存BMP，需要调整为BGR
+ */
+void yuv422packed_to_rgb24(YUV_TYPE type, unsigned char *yuv, unsigned char *rgb, int width, int height);
+
+/** 
+ * @brief YUV422SP转RGB24(查表法)
+ *
+ * @param type[IN]   YUV格式类型
+ * @param yuvbuffer  YUV422SP格式缓冲区
+ * @param rgbbuffer  RGB24格式缓冲区
+ * @param width      图像宽
+ * @param height     图像高
+ *
+ *
+ * @note
+ *        1、YUV422SP格式YUV缓冲区大小为w * h * 2，支持NV16、NV61
+ *        2、rgbbuffer数据排序为RGB，如保存BMP，需要调整为BGR
+ */
+void yuv422sp_to_rgb24(YUV_TYPE type, unsigned char* yuvbuffer, unsigned char* rgbbuffer, int width, int height);
 
 /** 
  * @brief YUV420P转RGB24(查表法)
  * 
+ * @param type[IN]   YUV格式类型
  * @param yuvbuffer  YUV420P格式缓冲区
  * @param rgbbuffer  RGB24格式缓冲区
  * @param width      图像宽
@@ -105,22 +140,9 @@ void yuv422p_to_rgb24(unsigned char* yuvbuffer, unsigned char* rgbbuffer, int wi
  *        1、YUV420P格式YUV缓冲区大小为w * h * 3 / 2
  *        2、rgbbuffer数据排序为RGB，如保存BMP，需要调整为BGR
  */
-void yuv420p_to_rgb24(unsigned char* yuvbuffer,unsigned char* rgbbuffer, int width, int height);
+void yuv420p_to_rgb24(YUV_TYPE type, unsigned char* yuvbuffer,unsigned char* rgbbuffer, int width, int height);
 
-/** 
- * @brief YUV422SP转RGB24(查表法)
- * 
- * @param yuvbuffer  YUV422SP格式缓冲区
- * @param rgbbuffer  RGB24格式缓冲区
- * @param width      图像宽
- * @param height     图像高
- *
- *
- * @note
- *        1、YUV422SP格式YUV缓冲区大小为w * h * 2
- *        2、rgbbuffer数据排序为RGB，如保存BMP，需要调整为BGR
- */
-void yuv422sp_to_rgb24(unsigned char* yuvbuffer,unsigned char* rgbbuffer, int width, int height);
+void yuv420sp_to_rgb24(YUV_TYPE type, unsigned char* yuvbuffer,unsigned char* rgbbuffer, int width,int height) ;
 
 /** 
  * @brief YUV转RGB24(查表法)
@@ -153,8 +175,6 @@ void yuv420_to_rgb24_1(unsigned char* yuv420, unsigned char* rgb, int width, int
 void yuv420_to_rgb24_2(unsigned char *yuv420, unsigned char *rgb24, int width, int height) ;
 
 void yuv420_to_rgb24_3(unsigned char* yuv, unsigned char* rgb, int width, int height);
-
-void yuv422packed_to_rgb24(YUV_TYPE type, unsigned char *yuv, unsigned char *rgb, int width, int height);
 
 void yuv4444_to_rgb24(unsigned char *yuv, unsigned char *rgb, int width, int height);
 

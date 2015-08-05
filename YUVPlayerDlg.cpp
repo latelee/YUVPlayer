@@ -641,17 +641,17 @@ void CYUVPlayerDlg::OnDropFiles(HDROP hDropInfo)
     m_bLastFrame.EnableWindow(TRUE);
 
 
-#if 00
-    save_yuv_file("YUV_yuyv.yuv", 320, 240, FMT_YUYV);
-    save_yuv_file("YUV_yvyu.yuv", 320, 240, FMT_YVYU);
-    save_yuv_file("YUV_uyvy.yuv", 320, 240, FMT_UYVY);
-    save_yuv_file("YUV_vyuy.yuv", 320, 240, FMT_VYUY);
-    
-    save_yuv_file("YUV_yuv444.yuv", 320, 240, FMT_YUV444);
+#if 0
+    save_yuv_file("rainbow_176x144_yuyv.yuv", 176, 144, FMT_YUYV);
+    save_yuv_file("rainbow_176x144_yvyu.yuv", 176, 144, FMT_YVYU);
+    save_yuv_file("rainbow_176x144_uyvy.yuv", 176, 144, FMT_UYVY);
+    save_yuv_file("rainbow_176x144_vyuy.yuv", 176, 144, FMT_VYUY);
+    save_yuv_file("rainbow_176x144_yuv444.yuv", 176, 144, FMT_YUV444);
 #endif
 
-    //change_yuv_file("suzie_qcif_yuv420p_00.yuv", "suzie_qcif_sp.yuv", 176, 144, 0);
+    //change_yuv_file("suzie_qcif_yuv420p_00.yuv", "suzie_qcif_nv21.yuv", 176, 144, 0);
     //change_yuv_file("suzie_qcif_sp.yuv", "suzie_qcif_p.yuv", 176, 144, 1);
+    //change_yuv_file("suzie_qcif_yuv422p.yuv", "suzie_qcif_nv61.yuv", 176, 144, 2);
 }
 
 /////////////////////////////

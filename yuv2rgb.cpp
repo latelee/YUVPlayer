@@ -1,3 +1,6 @@
+/**
+代码使用p[0]这类的形式，是因为这类的表现方式便于分析格式
+*/
 #include "stdafx.h" // for MFC
 
 #include <stdio.h>
@@ -209,7 +212,7 @@ void yuv422packed_to_rgb24(YUV_TYPE type, unsigned char* yuv422p, unsigned char*
             |                    |
             +--------------------+
                 w/2
-UV交织为NV12，VU交织为NV21
+UV交织为NV16，VU交织为NV61
 可以与上一函数合并，但方便查看，还是不合并
 */
 void yuv422sp_to_rgb24(YUV_TYPE type, unsigned char* yuv422sp, unsigned char* rgb, int width, int height)
@@ -346,10 +349,6 @@ void yuv420p_to_rgb24(YUV_TYPE type, unsigned char* yuvbuffer,unsigned char* rgb
     unsigned char *d1, *d2;   
     unsigned char *src_u, *src_v;
     static int init_yuv420p = 0;
-    long RGB_SIZE = 0;
-    unsigned char tmp;
-
-    RGB_SIZE = width * height * 3;
     
     src_u = yuvbuffer + width * height;   // u
     src_v = src_u + width * height / 4;  //  v
@@ -409,21 +408,98 @@ void yuv420p_to_rgb24(YUV_TYPE type, unsigned char* yuvbuffer,unsigned char* rgb
     }
 }
 
+// 失真很严重，不懂为什么
+void yuv420p_to_rgb24_bad(YUV_TYPE type, unsigned char* yuvbuffer,unsigned char* rgbbuffer, int width,int height)   
+{
+    int y, cb, cr;
+    int r, g, b;
+    int i = 0;
+    unsigned char* p_y;
+    unsigned char* p_u;
+    unsigned char* p_v;
+    unsigned char* p_rgb;
+
+    p_y = yuvbuffer;
+    p_u = p_y + width * height;
+    p_v = p_u + width * height / 4;
+
+    if (type == FMT_YV12)
+    {
+        p_v = p_y + width * height;
+        p_u = p_u + width * height / 4;
+    }
+    p_rgb = rgbbuffer;
+
+    init_yuv422p_table();
+
+    for (i = 0; i < width * height / 4; i++)
+    {
+        y  = p_y[0];
+        cb = p_u[0];
+        cr = p_v[0];
+
+        r = MAX (0, MIN (255, (V[cr] + Y1[y])/10000));   //R value
+        b = MAX (0, MIN (255, (U[cb] + Y1[y])/10000));   //B value
+        g = MAX (0, MIN (255, (Y2[y] - 5094*(r) - 1942*(b))/10000)); //G value
+
+        p_rgb[0] = r;
+        p_rgb[1] = g;
+        p_rgb[2] = b;
+
+        ////////////////////////////////////////////
+        y  = p_y[1];
+        cb = p_u[0];
+        cr = p_v[0];
+        r = MAX (0, MIN (255, (V[cr] + Y1[y])/10000));   //R value
+        b = MAX (0, MIN (255, (U[cb] + Y1[y])/10000));   //B value
+        g = MAX (0, MIN (255, (Y2[y] - 5094*(r) - 1942*(b))/10000)); //G value
+
+        p_rgb[3] = r;
+        p_rgb[4] = g;
+        p_rgb[5] = b;
+
+        ////////////////////////////////////////////
+        y  = p_y[2];
+        cb = p_u[0];
+        cr = p_v[0];
+
+        r = MAX (0, MIN (255, (V[cr] + Y1[y])/10000));   //R value
+        b = MAX (0, MIN (255, (U[cb] + Y1[y])/10000));   //B value
+        g = MAX (0, MIN (255, (Y2[y] - 5094*(r) - 1942*(b))/10000)); //G value
+
+        p_rgb[6] = r;
+        p_rgb[7] = g;
+        p_rgb[8] = b;
+
+        ////////////////////////////////////////////
+        y  = p_y[3];
+        cb = p_u[0];
+        cr = p_v[0];
+        r = MAX (0, MIN (255, (V[cr] + Y1[y])/10000));   //R value
+        b = MAX (0, MIN (255, (U[cb] + Y1[y])/10000));   //B value
+        g = MAX (0, MIN (255, (Y2[y] - 5094*(r) - 1942*(b))/10000)); //G value
+
+        p_rgb[9] = r;
+        p_rgb[10] = g;
+        p_rgb[11] = b;
+
+        p_y += 4;
+        p_u += 1;
+        p_v += 1;
+        p_rgb += 12;
+    }
+}
+
 void yuv420sp_to_rgb24(YUV_TYPE type, unsigned char* yuvbuffer,unsigned char* rgbbuffer, int width,int height)   
 {
     int y1, y2, u, v;    
     unsigned char *py1, *py2;   
     int i, j, c1, c2, c3, c4;   
     unsigned char *d1, *d2;   
-    unsigned char *src_u, *src_v;
+    unsigned char *src_u;
     static int init_yuv420p = 0;
-    long RGB_SIZE = 0;
-    unsigned char tmp;
-
-    RGB_SIZE = width * height * 3;
 
     src_u = yuvbuffer + width * height;   // u
-    src_v = src_u + width * height / 4;  // v
 
     py1 = yuvbuffer;   // y
     py2 = py1 + width;   
@@ -436,8 +512,16 @@ void yuv420sp_to_rgb24(YUV_TYPE type, unsigned char* yuvbuffer,unsigned char* rg
     {    
         for (i = 0; i < width; i += 2)    
         {
-            u = *src_u++;   
-            v = *src_v++;   
+            if (type ==  FMT_NV12)
+            {
+                u = *src_u++;   
+                v = *src_u++;      // v紧跟u，在u的下一个位置
+            }
+            if (type == FMT_NV21)
+            {
+                v = *src_u++;   
+                u = *src_u++;      // u紧跟v，在v的下一个位置
+            }
 
             c1 = crv_tab[v];   
             c2 = cgu_tab[u];   
@@ -472,6 +556,52 @@ void yuv420sp_to_rgb24(YUV_TYPE type, unsigned char* yuvbuffer,unsigned char* rg
         d2  += 3*width;
         py1 += width;
         py2 += width;
+    }
+}
+
+/**
+yuv444
+-->
+u0y0v0 ->r0 g0 b0
+u1y1v1 -> r1 g1 b1
+
+...
+*/
+void yuv4444_to_rgb24(unsigned char *yuv, unsigned char *rgb, int width, int height)
+{
+    int y, cb, cr;
+    int r, g, b;
+    int i = 0;
+    unsigned char* p_y;
+    unsigned char* p_u;
+    unsigned char* p_v;
+    unsigned char* p_rgb;
+
+    p_y = yuv;
+    p_u = yuv+width*height;
+    p_v = yuv+2*width*height;
+    p_rgb = rgb;
+
+    init_yuv422p_table();
+
+    for (i = 0; i < width * height; i++)
+    {
+        y  = p_y[0];
+        cb = p_u[0];
+        cr = p_v[0];
+        //yuv2rgb(y, cb, cr, &r, &g, &b);
+        //yuv2rgb_1(y, cb, cr, &r, &g, &b);
+        r = MAX (0, MIN (255, (V[cr] + Y1[y])/10000));   //R value
+        b = MAX (0, MIN (255, (U[cb] + Y1[y])/10000));   //B value
+        g = MAX (0, MIN (255, (Y2[y] - 5094*(r) - 1942*(b))/10000)); //G value
+
+        p_rgb[0] = r;
+        p_rgb[1] = g;
+        p_rgb[2] = b;;
+        p_rgb += 3;
+        p_y++;
+        p_u++;
+        p_v++;
     }
 }
 
@@ -580,18 +710,25 @@ void yuv422p_to_yuv422sp(unsigned char* yuv422p, unsigned char* yuv422sp, int wi
     y_size = uv_size = width * height;
 
     p_y1 = yuv422p;
-    p_uv = yuv422p + y_size;
 
     p_y2 = yuv422sp;
-    p_u  = yuv422sp + y_size;
+    p_u  = p_y1 + y_size;
     p_v  = p_u + width * height / 2;
+
+    p_uv = p_y2 + y_size;
 
     memcpy(p_y2, p_y1, y_size);
 
     for (j = 0, i = 0; j < uv_size; j+=2, i++)
     {
+	// 此处可调整U、V的位置，变成NV16或NV61
+#if 0
         p_uv[j] = p_u[i];
         p_uv[j+1] = p_v[i];
+#else
+        p_uv[j] = p_v[i];
+        p_uv[j+1] = p_u[i];
+#endif
     }
 }
 
@@ -652,8 +789,14 @@ void yuv420p_to_yuv420sp(unsigned char* yuv420p, unsigned char* yuv420sp, int wi
     // u
     for (j = 0, i = 0; j < y_size/2; j+=2, i++)
     {
+	// 此处可调整U、V的位置，变成NV12或NV21
+#if 0
         uv_tmp[j] = u[i];
         uv_tmp[j+1] = v[i];
+#else
+        uv_tmp[j] = v[i];
+        uv_tmp[j+1] = u[i];
+#endif
     }
 }
 
@@ -847,8 +990,6 @@ void yuv422packed_to_rgb24_1(YUV_TYPE type, unsigned char *yuv, unsigned char *r
     int r, g, b;
     int i = 0;
     unsigned char* p;
-    unsigned char* p_u;
-    unsigned char* p_v;
     unsigned char* p_rgb;
 
     p = yuv;
@@ -909,46 +1050,6 @@ void yuv422packed_to_rgb24_1(YUV_TYPE type, unsigned char *yuv, unsigned char *r
         p_rgb[5] = b;
         p_rgb += 6;
         p += 4;
-    }
-}
-
-/**
-yuv444
--->
-u0y0v0 ->r0 g0 b0
-u1y1v1 -> r1 g1 b1
-
-...
-*/
-void yuv4444_to_rgb24(unsigned char *yuv, unsigned char *rgb, int width, int height)
-{
-    int y, cb, cr;
-    int r, g, b;
-    int i = 0;
-    unsigned char* p_y;
-    unsigned char* p_u;
-    unsigned char* p_v;
-    unsigned char* p_rgb;
-
-    p_y = yuv;
-    p_u = yuv+width*height;
-    p_v = yuv+2*width*height;
-    p_rgb = rgb;
-    for (i = 0; i < width * height; i++)
-    {
-        y  = p_y[0];
-        cb = p_u[0];
-        cr = p_v[0];
-        //yuv2rgb(y, cb, cr, &r, &g, &b);
-        yuv2rgb_1(y, cb, cr, &r, &g, &b);
-        // 此处可调整RGB排序，BMP图片排序为BGR
-        p_rgb[0] = r;
-        p_rgb[1] = g;
-        p_rgb[2] = b;;
-        p_rgb += 3;
-        p_y++;
-        p_u++;
-        p_v++;
     }
 }
 
@@ -1361,8 +1462,8 @@ void change_yuv_file(const char* filename, const char* file_out, int width, int 
     fclose(fp);
 
     if (type == 0)
-        //yuv420p_to_yuv420sp(yuv_buf, yuv_buf_out, width, height);
-        yuv420sp_to_yuv420p_1(yuv_buf, width, height);
+        yuv420p_to_yuv420sp(yuv_buf, yuv_buf_out, width, height);
+        //yuv420sp_to_yuv420p_1(yuv_buf, width, height);
     if (type == 1)
         yuv420sp_to_yuv420p(yuv_buf, yuv_buf_out, width, height);
     if (type == 2)
@@ -1371,8 +1472,8 @@ void change_yuv_file(const char* filename, const char* file_out, int width, int 
         yuv422sp_to_yuv422p(yuv_buf, yuv_buf_out, width, height);
 
     fp = fopen(file_out, "w");
-    //fwrite(yuv_buf_out, 1, len, fp);
-    fwrite(yuv_buf, 1, len, fp);
+    fwrite(yuv_buf_out, 1, len, fp);
+    //fwrite(yuv_buf, 1, len, fp);
     fclose(fp);
 
     free(yuv_buf);

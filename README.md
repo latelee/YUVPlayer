@@ -5,11 +5,19 @@ YUV Player -- YUV播放器
     VS2010工程，参考Yuvviewer及YUV Player Deluxe编写的YUV播放器
 
 ### 功能
-    播放各种格式的YUV文件。
+    播放各种格式的YUV文件。已知支持格式有：
+    Y;
+    YUV420(I420);YV12;
+    YUV422(I422);YV16;
+    YUV444;
+    YUY2(YUYV);YVYU;UYVY;VYUY;
+    NV12(YUV420SP);NV21;
+    NV16(YUV422SP);NV61
 
 ### 其它
 
 ### 声明
     本程序仅限于学习交流。程序所用部分代码为网络上可搜索到的片段，版权不在作者。
     
-
+### 版本
+    v1.0 临时版本，支持各类格式的播放，可用版本，初具雏形。

@@ -60,3 +60,6 @@ Y;YUV420(I420);YV12;YUV422(I422);YV16;YUV444;YUY2(YUYV);YVYU;UYVY;VYUY;NV12;NV21
 
 next 
 完善一下读取文件，按帧来索引好点。
+
+8.6 晚
+v1.0版本发布

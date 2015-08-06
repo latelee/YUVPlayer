@@ -7,6 +7,190 @@
 #include "afxdialogex.h"
 #include "YUVPlayerDlg.h"
 
+#define ARRAY_ELEMS(a) (sizeof(a) / sizeof((a)[0]))
+
+// 从字符串中拿到x前后的数字
+void find_resolution(char* filename, int& fmt_idx, int& width, int& height)
+{
+#define str_debug
+    int i = 0;
+    int j = 0;
+    int len = 0;
+    int pos = 0;
+    char* tmp = NULL;
+    char* p = NULL;
+    char c_width[8] = {0};
+    char c_height[8] = {0};
+    char c_fmt[8] = {0};
+    char c_res[8] = {0};
+    char c_file[128] = {0};
+
+    const char* fmt_str[] = {
+        "yuv420",
+        "yv12",
+        "yuv422",
+        "yv16",
+        "yuv444",
+        "yuyv",
+        "yvyu",
+        "uyvy",
+        "vyuy",
+        "nv12",
+        "nv21",
+        "nv16",
+        "nv61",
+        "yuv420sp",
+        "yuv422sp",
+    };
+
+    const char* res_str[] = {
+        "cif",
+        "qcif",
+        "480p",
+        "720p",
+        "1080p",
+    };
+    const char* wh_str[] = {
+        "352x288",
+        "176x144",
+        "720x480",
+        "1280x720",
+        "1920x1080",
+    };
+
+    int idx = -1;
+    fmt_idx = -2; // trick...
+
+#if 0
+    len = strlen(filename);
+    str_debug("org string len:%d %s\b", len, filename);
+#endif
+
+    // 查找后缀名
+    tmp = strrchr(filename, '.');
+    if (tmp != NULL)
+    {
+        strncpy(c_file, filename, tmp-filename);
+        pos = strlen(tmp+1);
+        //str_debug("find ext: %s(%d) %s %s %d\n", tmp+1, pos, filename, c_file, tmp-filename);
+        // 查找格式字符串
+        for (i = 0; i < ARRAY_ELEMS(fmt_str); i++)
+        {
+            p = strstr(tmp+1, fmt_str[i]);
+            if (p != NULL)
+            {
+                strncpy(c_fmt, p, strlen(fmt_str[i]));
+                idx = i;
+            }
+        }
+    }
+    else
+    {
+        strcpy(c_file, filename);
+    }
+    str_debug("second string:%s \n", c_file);
+    if (idx == 0 && pos != 1) idx = -1;
+    if (idx == 13) idx = 9;
+    if (idx == 14) idx = 11;
+    // 这里打印的是最大匹配的
+    if (idx != -1)
+        str_debug("fmt(externsion)[%d]: %s(=%s)\n", idx, c_fmt, fmt_str[idx]);    
+
+    // 查找格式字符串
+    for (i = 0; i < ARRAY_ELEMS(fmt_str); i++)
+    {
+        p = strstr(c_file, fmt_str[i]);
+        //str_debug("p: %s\n", p);
+        if (p != NULL)
+        {
+            strncpy(c_fmt, p, strlen(fmt_str[i]));
+            fmt_idx = i;
+        }
+    }
+    if (fmt_idx == 13) fmt_idx = 9;
+    if (fmt_idx == 14) fmt_idx = 11;
+    // 这里打印的是最大匹配的
+    if (fmt_idx != -1)
+        str_debug("fmt[%d]: %s(=%s)\n", fmt_idx, c_fmt, fmt_str[fmt_idx]);
+
+    if (idx != -1 && fmt_idx == -1) fmt_idx = idx;
+    if (fmt_idx != -1)
+        str_debug("---final fmt[%d]: %s(=%s)---\n", fmt_idx, c_fmt, fmt_str[fmt_idx]);
+
+    fmt_idx+=1;
+
+    // 查找分辨率字符串
+    for (i = 0; i < ARRAY_ELEMS(res_str); i++)
+    {
+        //str_debug("res--: %s\n", res_str[i]);
+        p = strstr(c_file, res_str[i]);
+        if (p != NULL)
+        {
+            strncpy(c_res, p, strlen(res_str[i]));
+            idx = i;
+            //str_debug("res: %s\n", c_res);
+        }
+    }
+
+    if (idx != -1)
+    {
+        sscanf(wh_str[idx], "%dx%d", &width, &height);
+        str_debug("res[%d]: %s %d %d\n", idx, c_res, width, height);
+    }
+    //////////////////////
+
+    //  解析宽高
+    len = strlen(c_file);
+    pos = strcspn(c_file, "xX");
+    if (len == pos) // 没有找到直接返回
+    {
+        str_debug("---final width: %d height: %d---\n", width, height);
+        return;
+    }
+    tmp = c_file + pos;
+    str_debug("find1 x[%d len: %d] %s\n", pos, len, tmp);
+
+    //return;
+    p = c_file;
+    len = len - pos + 1;
+    j = pos;
+    // 找到'x'前面的数字
+    for (i = 0; i < len; i++)
+    {
+        str_debug("pos: %d %c\n", j, p[j]);
+        if (!isdigit(p[--j]))
+        {
+            j++;
+            break;
+        }
+    }
+    str_debug("before x i:%d j: %d tmp: %s\n", i, j, p+j);
+    strncpy(c_width, p+j, i);
+    width = atoi(c_width);
+    str_debug("c_width: %s %d\n", c_width, width);
+
+    // 找到'x'后面的数字
+    p = c_file + pos+1; // 跳过'x'
+    len = p - c_file;
+    str_debug("after find x[%d] %s\n", pos, p);
+    for (i = 0; i < len; i++)
+    {
+        if (!isdigit(p[i]))
+            break;
+    }
+    strncpy(c_height, p, i);
+    height = atoi(c_height);
+    str_debug("c_height: %s %d\n", c_height, height);
+
+    if (idx == -1 && (width == 0 || height == 0))
+        width = height = -1;
+    if (idx != -1 && (width == 0 || height == 0))
+        sscanf(wh_str[idx], "%dx%d", &width, &height);
+    str_debug("---final width: %d height: %d---\n", width, height);
+
+    str_debug("\n");
+}
+
 // CSettingDlg 对话框
 
 IMPLEMENT_DYNAMIC(CSettingDlg, CDialogEx)
@@ -15,7 +199,7 @@ CSettingDlg::CSettingDlg(CWnd* pParent /*=NULL*/)
 	: CDialogEx(CSettingDlg::IDD, pParent)
 {
     m_pParentWnd = NULL;
-    m_strAddedSize = _T("160x120;176x144;320x240;352x288;640x480;704x576;1600x1200;1920x1080;3072x2048");
+    m_strAddedSize = _T("160x120;176x144;320x240;352x288;640x480;704x576;720x480;1280x720;1600x1200;1920x1080;3072x2048");
     m_nWidth = 176;
     m_nHeight = 144;
     m_nFps = 30;
@@ -212,7 +396,6 @@ void CSettingDlg::OnSelchangeCbSize()
 void CSettingDlg::OnSelchangeCbYuvFmt()
 {
     m_nYuvFormat = m_cbYuvFormat.GetCurSel();
-    //UpdateData(FALSE);
     GetDlgItem(IDC_APPLY)->EnableWindow(TRUE);
 }
 
@@ -269,4 +452,35 @@ void CSettingDlg::OnBnClickedBtAdd()
 void CSettingDlg::OnBnClickedBtDel()
 {
     // TODO: 在此添加控件通知处理程序代码
+}
+
+void CSettingDlg::ParseFilename(const char* pFilename)
+{
+    find_resolution((char*)pFilename, m_nYuvFormat, m_nWidth, m_nHeight);
+
+    // todo 保留原来的值
+    if (m_nYuvFormat == -1)
+    {
+        m_nYuvFormat = 1;
+    }
+    else
+
+    if (m_nWidth <= 0 || m_nHeight <= 0)
+    {
+        m_nWidth = 176;
+        m_nHeight = 144;
+    }
+    // 更新控件
+    int nResolutionIdx = -1;
+    for (int i = 0; i < m_strArrAddedSize.GetCount()-1; i++)
+    {
+        int width = 0;
+        int height = 0;
+        swscanf_s(m_strArrAddedSize[i].GetBuffer(), _T("%dx%d"), &width, &height);
+        if (width == m_nWidth && height == m_nHeight)
+            nResolutionIdx = i;
+    }
+    m_cbResolution.SetCurSel(nResolutionIdx);
+    m_cbYuvFormat.SetCurSel(m_nYuvFormat);
+    UpdateData(FALSE);
 }

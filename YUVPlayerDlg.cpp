@@ -625,9 +625,18 @@ void CYUVPlayerDlg::OnDropFiles(HDROP hDropInfo)
     m_strPathName.Format(_T("%s"), pFilePathName);
     ::DragFinish(hDropInfo);   // 注意这个不能少，它用于释放Windows 为处理文件拖放而分配的内存
 
+    // 显示标题
     CString strTemp;
     strTemp.Format(_T("%s-%s"), pFilePathName, APP_NAM);
     this->SetWindowText(strTemp);
+
+    wchar_t* tmp = wcsrchr(pFilePathName, '\\');
+    char szFilename[256] = {0};
+    WideCharToMultiByte(CP_ACP, 0, tmp+1, wcslen(tmp+1), szFilename, 256, NULL, NULL);
+    free(pFilePathName);
+
+    m_pSettingDlg->ParseFilename(szFilename);
+    m_pSettingDlg->SetParametersToParentWnd(m_nWidth, m_nHeight, m_nFps, m_nYuvFormat, m_fLoop);
 
     // 显示第一帧
     ShowOpenedFrame();

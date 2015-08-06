@@ -17,8 +17,6 @@ public:
 
 public:
     void SetParentWnd(CYUVPlayerDlg* pWnd) {m_pParentWnd = pWnd;}
-
-
     void SetParametersToParentWnd(int& width, int& height, int& fps, int& fmt, BOOL& loop)
     {
         width = m_nWidth;
@@ -31,6 +29,8 @@ public:
     void SetRegistration(CString& strSize, int width, int height, int fpsidx, int fmt, int loop);
     void GetRegistration(CString& strSize, int& width, int& height, int& fpsidx, int& fmt, int& loop);
     BOOL ExistRegistration();
+
+    void ParseFilename(const char* pFilename);
 
 private:
     CYUVPlayerDlg *m_pParentWnd; // 窗口参数传递

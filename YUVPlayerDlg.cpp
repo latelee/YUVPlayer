@@ -682,6 +682,9 @@ void CYUVPlayerDlg::ShowOpenedFrame()
     case FMT_YUV444:
         m_iYuvSize = m_nWidth * m_nHeight * 3;
         break;
+    case FMT_Y:
+        m_iYuvSize = m_nWidth * m_nHeight;
+        break;
     default:
         break;
     }

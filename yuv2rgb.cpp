@@ -601,8 +601,6 @@ void yuv4444_to_rgb24(unsigned char *yuv, unsigned char *rgb, int width, int hei
         y  = p_y[0];
         cb = p_u[0];
         cr = p_v[0];
-        //yuv2rgb(y, cb, cr, &r, &g, &b);
-        //yuv2rgb_1(y, cb, cr, &r, &g, &b);
         r = MAX (0, MIN (255, (V[cr] + Y1[y])/10000));   //R value
         b = MAX (0, MIN (255, (U[cb] + Y1[y])/10000));   //B value
         g = MAX (0, MIN (255, (Y2[y] - 5094*(r) - 1942*(b))/10000)); //G value
@@ -614,6 +612,42 @@ void yuv4444_to_rgb24(unsigned char *yuv, unsigned char *rgb, int width, int hei
         p_y++;
         p_u++;
         p_v++;
+    }
+}
+
+/**
+只支持平面、半平面的格式
+交织的不支持，因为不知道如何获取Y
+*/
+void y_to_rgb24(unsigned char *yuv, unsigned char *rgb, int width, int height)
+{
+    int y, cb, cr;
+    int r, g, b;
+    int i = 0;
+    unsigned char* p_y;
+    unsigned char* p_rgb;
+
+    p_y = yuv;
+
+    p_rgb = rgb;
+
+    // 只转换Y的，U、V也需要，其值固定为128
+    cb = 128;
+    cr = 128;
+    init_yuv422p_table();
+
+    for (i = 0; i < width * height; i++)
+    {
+        y  = p_y[0];
+        r = MAX (0, MIN (255, (V[cr] + Y1[y])/10000));   //R value
+        b = MAX (0, MIN (255, (U[cb] + Y1[y])/10000));   //B value
+        g = MAX (0, MIN (255, (Y2[y] - 5094*(r) - 1942*(b))/10000)); //G value
+        p_rgb[0] = r;
+        p_rgb[1] = g;
+        p_rgb[2] = b;
+
+        p_rgb += 3;
+        p_y++;
     }
 }
 
@@ -648,6 +682,9 @@ int yuv_to_rgb24(YUV_TYPE type, unsigned char* yuvbuffer,unsigned char* rgbbuffe
         break;
     case FMT_YUV444:
         yuv4444_to_rgb24(yuvbuffer, rgbbuffer, width, height);
+        break;
+    case FMT_Y:
+        y_to_rgb24(yuvbuffer, rgbbuffer, width, height);
         break;
     default:
         printf("unsupported yuv type!\n");
@@ -813,6 +850,7 @@ void yuv420p_to_yuv420sp(unsigned char* yuv420p, unsigned char* yuv420sp, int wi
 }
 
 //// 原内存修改
+// 暂时失败
 void yuv420sp_to_yuv420p_1(unsigned char* yuv420sp, int width, int height)
 {
     int i, j;

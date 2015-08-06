@@ -16,6 +16,10 @@
  *
  * @log   2013-10-26 参考422p函数，实现422sp转换422p格式函数。将初始化接口隐藏，不对外公开
  *        2014-02-10 封装统一一个函数。
+ *        2014-08-03 更新YUV转RGB函数。添加UYVY格式接口。
+ *        2014-08-04 完成422打包格式的接口。4种格式测试通过。 完成YUV444格式。 SP、P互转接口。
+ *        2014-08-05 完成422SP、420SP格式的转换。打包格式使用查表法。
+ *        2014-08-06 Y转换RGB
  *
  * 笔记：
             每个Y、U、V、R、G、B均占用1个字节
@@ -75,6 +79,24 @@ typedef enum
     FMT_NV16 = 12,
     FMT_NV61 = 13,
 }YUV_TYPE;
+
+/** 
+ * @brief YUV转RGB24(查表法)
+ * 
+ * @param type       YUV格式类型 支持格式见YUV_TYPE定义
+ * @param yuvbuffer  YUV格式缓冲区
+ * @param rgbbuffer  RGB24格式缓冲区
+ * @param width      图像宽
+ * @param height     图像高
+ *
+ * @return 0: OK -1: failed
+ *
+ * @note
+ *        1、YUV422 buffer: w * h * 2 YUV420 buffer: w * h * 3 / 2
+ *        2、rgbbuffer数据排序为RGB，如保存BMP，需要调整为BGR
+ *        3、总转换入口函数
+ */
+int yuv_to_rgb24(YUV_TYPE type, unsigned char* yuvbuffer,unsigned char* rgbbuffer, int width, int height);
 
 /**
  * @brief  YUV422P转换为RGB24(查表法)
@@ -143,23 +165,6 @@ void yuv422sp_to_rgb24(YUV_TYPE type, unsigned char* yuvbuffer, unsigned char* r
 void yuv420p_to_rgb24(YUV_TYPE type, unsigned char* yuvbuffer,unsigned char* rgbbuffer, int width, int height);
 
 void yuv420sp_to_rgb24(YUV_TYPE type, unsigned char* yuvbuffer,unsigned char* rgbbuffer, int width,int height) ;
-
-/** 
- * @brief YUV转RGB24(查表法)
- * 
- * @param type       YUV格式类型
- * @param yuvbuffer  YUV格式缓冲区
- * @param rgbbuffer  RGB24格式缓冲区
- * @param width      图像宽
- * @param height     图像高
- *
- * @return 0: OK -1: failed
- *
- * @note
- *        1、YUV422 buffer: w * h * 2 YUV420 buffer: w * h * 3 / 2
- *        2、rgbbuffer数据排序为RGB，如保存BMP，需要调整为BGR
- */
-int yuv_to_rgb24(YUV_TYPE type, unsigned char* yuvbuffer,unsigned char* rgbbuffer, int width, int height);
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 void yuv422sp_to_yuv422p(unsigned char* yuv422sp, unsigned char* yuv422p, int width, int height);

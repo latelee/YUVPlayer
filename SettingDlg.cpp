@@ -293,6 +293,7 @@ BOOL CSettingDlg::OnInitDialog()
     // 
     CString strTemp;
 
+#if 0
     // default
     //if (!ExistRegistration())
     if (1)
@@ -301,6 +302,7 @@ BOOL CSettingDlg::OnInitDialog()
     }
     // read
     GetRegistration(m_strAddedSize, m_nWidth, m_nHeight, m_nFpsIndex, m_nYuvFormat, m_fLoop);
+#endif
 #if 0
     // debug
     CString strMsg;

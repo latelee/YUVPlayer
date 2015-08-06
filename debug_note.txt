@@ -18,6 +18,9 @@ YUV 分量
 
 3、wchar和char的区别
 不能使用sscanf，字符串要用_T()
+宽字符串查找：wcsrchr
+宽字符串计算长度： wcslen
+
 
 4、写注册表
 AddedSizes
@@ -27,8 +30,8 @@ FrameHeight
 FrameRate
 Loop
 
-5、窗口缩放 对应控件处理器
-图像也跟着缩放
+5、窗口缩放 对应控件处理器 OK
+图像也跟着缩放 OK
 
 
 ==================================
@@ -38,10 +41,22 @@ Loop
 保存用户输入的参数
 
 
-快捷键
+快捷键支持
 
 要支持的格式：
 Y;YUV420(I420);YV12;YUV422(I422);YV16;YUV444;YUY2(YUYV);YVYU;UYVY;VYUY;NV12;NV21;NV16;NV61
+--> OK
 
+生成YUV文件
+YUV之间转换
 
 ==============================
+
+8.6
+支持格式：
+Y;YUV420(I420);YV12;YUV422(I422);YV16;YUV444;YUY2(YUYV);YVYU;UYVY;VYUY;NV12;NV21;NV16;NV61
+注：YUV400实际上即只有Y分量，其它分量没有，其占用文件只是width*height。
+在工具中选Y格式即可。
+
+next 
+完善一下读取文件，按帧来索引好点。

@@ -59,15 +59,7 @@ public:
     void ShowOpenedFrame();
     void ShowPicture(BYTE* pbData, int iSize);
 
-public:
-    void GetParameters(int& width, int height, int fps, int fmt, BOOL loop)
-    {
-        m_nWidth = width;
-        m_nHeight = height;
-        m_nFps = fps;
-        m_nYuvFormat = fmt;
-        m_fLoop = loop;
-    }
+    void SetParentParameters(int width, int height, int fps, int fmt, BOOL loop);
 
     void ShowSettingWindow();
 

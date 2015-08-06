@@ -362,7 +362,7 @@ void CSettingDlg::OnBnClickedApply()
 
     m_cbResolution.SetCurSel(nResolutionIdx);
 
-    m_pParentWnd->GetParameters(m_nWidth, m_nHeight, m_nFps, m_nYuvFormat, m_fLoop);
+    m_pParentWnd->SetParentParameters(m_nWidth, m_nHeight, m_nFps, m_nYuvFormat, m_fLoop);
 
     GetDlgItem(IDC_APPLY)->EnableWindow(FALSE);
 }
@@ -370,14 +370,13 @@ void CSettingDlg::OnBnClickedApply()
 
 void CSettingDlg::OnBnClickedCancel()
 {
-    // TODO: 在此添加控件通知处理程序代码
     CDialogEx::OnCancel();
 }
 
 
 void CSettingDlg::OnBnClickedOk()
 {
-    m_pParentWnd->GetParameters(m_nWidth, m_nHeight, m_nFps, m_nYuvFormat, m_fLoop);
+    m_pParentWnd->SetParentParameters(m_nWidth, m_nHeight, m_nFps, m_nYuvFormat, m_fLoop);
     CDialogEx::OnOK();
 }
 
@@ -419,12 +418,6 @@ void CSettingDlg::OnClickedCkLoop()
 
 void CSettingDlg::OnChangeEWidth()
 {
-    // TODO:  如果该控件是 RICHEDIT 控件，它将不
-    // 发送此通知，除非重写 CDialogEx::OnInitDialog()
-    // 函数并调用 CRichEditCtrl().SetEventMask()，
-    // 同时将 ENM_CHANGE 标志“或”运算到掩码中。
-
-    // TODO:  在此添加控件通知处理程序代码
     UpdateData();
     GetDlgItem(IDC_APPLY)->EnableWindow(TRUE);
 }
@@ -432,12 +425,6 @@ void CSettingDlg::OnChangeEWidth()
 
 void CSettingDlg::OnChangeEHeight()
 {
-    // TODO:  如果该控件是 RICHEDIT 控件，它将不
-    // 发送此通知，除非重写 CDialogEx::OnInitDialog()
-    // 函数并调用 CRichEditCtrl().SetEventMask()，
-    // 同时将 ENM_CHANGE 标志“或”运算到掩码中。
-
-    // TODO:  在此添加控件通知处理程序代码
     UpdateData();
     GetDlgItem(IDC_APPLY)->EnableWindow(TRUE);
 }
@@ -445,30 +432,32 @@ void CSettingDlg::OnChangeEHeight()
 // 向注册表添加一种分辨率
 void CSettingDlg::OnBnClickedBtAdd()
 {
-    // TODO: 在此添加控件通知处理程序代码
+
 }
 
 // 在注册表删除一种分辨率
 void CSettingDlg::OnBnClickedBtDel()
 {
-    // TODO: 在此添加控件通知处理程序代码
+
 }
 
 void CSettingDlg::ParseFilename(const char* pFilename)
 {
-    find_resolution((char*)pFilename, m_nYuvFormat, m_nWidth, m_nHeight);
+    int nYuvFormat = 0;
+    int nWidth = 0;
+    int nHeight = 0;
 
-    // todo 保留原来的值
-    if (m_nYuvFormat == -1)
+    find_resolution((char*)pFilename, nYuvFormat, nWidth, nHeight);
+
+    // 保留原来的值
+    if (nYuvFormat != -1)
     {
-        m_nYuvFormat = 1;
+        m_nYuvFormat = nYuvFormat;
     }
-    else
-
-    if (m_nWidth <= 0 || m_nHeight <= 0)
+    if (nWidth > 0 && nHeight > 0)
     {
-        m_nWidth = 176;
-        m_nHeight = 144;
+        m_nWidth = nWidth;
+        m_nHeight = nHeight;
     }
     // 更新控件
     int nResolutionIdx = -1;

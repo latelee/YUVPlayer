@@ -790,6 +790,17 @@ void CYUVPlayerDlg::ShowPicture(BYTE* pbData, int iSize)
     m_fShowBlack = FALSE;
 }
 
+void CYUVPlayerDlg::SetParentParameters(int width, int height, int fps, int fmt, BOOL loop)
+{
+    m_nWidth = width;
+    m_nHeight = height;
+    m_nFps = fps;
+    m_nYuvFormat = fmt;
+    m_fLoop = loop;
+
+    ShowOpenedFrame();
+}
+
 // ≤•∑≈œﬂ≥Ã
 UINT Play(LPVOID pParam)
 {

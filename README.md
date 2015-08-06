@@ -5,8 +5,11 @@ YUV Player -- YUV播放器
     VS2010工程，参考Yuvviewer及YUV Player Deluxe编写的YUV播放器
 
 ### 功能
-    //todo
+    播放各种格式的YUV文件。
 
 ### 其它
+
+### 声明
+    本程序仅限于学习交流。程序所用部分代码为网络上可搜索到的片段，版权不在作者。
     
 

@@ -445,14 +445,6 @@ void CYUVPlayerDlg::OnBnClickedButtonOpen()
 
     ShowOpenedFrame();
 
-    m_bSaveFrame.EnableWindow(TRUE);
-    m_bPlay.EnableWindow(TRUE);
-    //m_bStop.EnableWindow(TRUE);
-    m_bPrevFrame.EnableWindow(TRUE);
-    m_bNextFrame.EnableWindow(TRUE);
-    m_bFirstFrame.EnableWindow(TRUE);
-    m_bLastFrame.EnableWindow(TRUE);
-
     return;
 }
 
@@ -510,31 +502,50 @@ void CYUVPlayerDlg::OnBnClickedButtonPlay()
 
 void CYUVPlayerDlg::OnBnClickedButtonStop()
 {
-
+    OnBnClickedButtonFirst();
 }
 
 
 void CYUVPlayerDlg::OnBnClickedButtonPrev()
 {
-
+    m_nCurrentFrame--;
+    if (m_nCurrentFrame < 0)
+    {
+        m_nCurrentFrame = 0;
+        return;
+    }
+    this->Read(m_nCurrentFrame);
+    this->Show();
 }
 
 
 void CYUVPlayerDlg::OnBnClickedButtonNext()
 {
+    m_nCurrentFrame++;
 
+    if (m_nCurrentFrame > m_nTotalFrame - 1)
+    {
+        m_nCurrentFrame = m_nTotalFrame - 1;
+
+    }
+    this->Read(m_nCurrentFrame);
+    this->Show();
 }
 
 
 void CYUVPlayerDlg::OnBnClickedButtonFirst()
 {
-
+    m_nCurrentFrame = 0;
+    this->Read(m_nCurrentFrame);
+    this->Show();
 }
 
 
 void CYUVPlayerDlg::OnBnClickedButtonLast()
 {
-
+    m_nCurrentFrame = m_nTotalFrame - 1;
+    this->Read(m_nCurrentFrame);
+    this->Show();
 }
 
 
@@ -602,16 +613,6 @@ void CYUVPlayerDlg::OnSize(UINT nType, int cx, int cy)
 void CYUVPlayerDlg::OnSizing(UINT fwSide, LPRECT pRect)
 {
     CDialogEx::OnSizing(fwSide, pRect);
-
-#if 0
-    CWnd *pWnd = GetDlgItem(IDC_VIDEO);
-    if (pWnd)
-    {
-        pWnd->MoveWindow(0, 0, pRect->right - pRect->left, pRect->bottom - pRect->top);
-        pWnd->Invalidate(FALSE);
-        pWnd->UpdateData();
-    }
-#endif
 }
 
 void CYUVPlayerDlg::OnDropFiles(HDROP hDropInfo)
@@ -638,16 +639,6 @@ void CYUVPlayerDlg::OnDropFiles(HDROP hDropInfo)
 
     // 显示第一帧
     ShowOpenedFrame();
-
-    m_bSaveFrame.EnableWindow(TRUE);
-    m_bPlay.EnableWindow(TRUE);
-    //m_bStop.EnableWindow(TRUE);
-    m_bPrevFrame.EnableWindow(TRUE);
-    m_bNextFrame.EnableWindow(TRUE);
-    m_bFirstFrame.EnableWindow(TRUE);
-    m_bLastFrame.EnableWindow(TRUE);
-
-
 #if 0
     save_yuv_file("rainbow_176x144_yuyv.yuv", 176, 144, FMT_YUYV);
     save_yuv_file("rainbow_176x144_yvyu.yuv", 176, 144, FMT_YVYU);
@@ -681,9 +672,17 @@ void CYUVPlayerDlg::Open()
     m_nCurrentFrame  = 0;
 }
 
+BOOL CYUVPlayerDlg::IsOpen()
+{
+    if (CFile::hFileNull != m_cFile.m_hFile)
+        return TRUE;
+    else
+        return FALSE;
+}
+
 void CYUVPlayerDlg::Malloc()
 {
-    // 设置YUV格式
+    // 根据YUV格式分配内存
     switch (m_nYuvFormat)
     {
     case FMT_YUV420:
@@ -718,11 +717,12 @@ void CYUVPlayerDlg::Malloc()
     m_pbRgbData  = new char[m_iRgbSize];
 
     m_nTotalFrame = (UINT)(m_cFile.GetLength() / m_iYuvSize);
-    this->ShowFrameCount();
+    this->ShowFrameCount(m_nCurrentFrame);
 }
 
 void CYUVPlayerDlg::Read(INT nCurrentFrame)
 {
+    this->ShowFrameCount(nCurrentFrame); // todo
     m_cFile.Seek(m_iYuvSize * nCurrentFrame, SEEK_SET);
     m_cFile.Read(m_pbYuvData, m_iYuvSize);
 }
@@ -753,18 +753,17 @@ void CYUVPlayerDlg::Show()
 
     // 再转换格式
     yuv_to_rgb24((YUV_TYPE)m_nYuvFormat, (unsigned char *)m_pbYuvData, (unsigned char *)m_pbRgbData+54, m_nWidth, m_nHeight);
-    // rgb->bgr
+    // BMP是BGR格式的，rgb->bgr
     swargb((BYTE*)m_pbRgbData+54, m_iRgbSize-54);
-    //yuv420_to_rgb24((unsigned char *)m_pbYuvData, (unsigned char *)m_pbRgbData+54, m_nWidth, m_nHeight);
     // 显示
     ShowPicture((BYTE *)m_pbRgbData, m_iRgbSize);
 }
 
-void CYUVPlayerDlg::ShowFrameCount()
+void CYUVPlayerDlg::ShowFrameCount(int nCurrentFrame)
 {
-    // 显示总帧数
+    // 显示当前帧/总帧数
     CString strTemp;
-    strTemp.Format(_T("%d/%d"), m_nCurrentFrame+1, m_nTotalFrame);
+    strTemp.Format(_T("%d/%d"), nCurrentFrame+1, m_nTotalFrame);
     GetDlgItem(IDC_STATIC_FRAMECNT)->SetWindowText(strTemp);
 }
 
@@ -777,84 +776,13 @@ void CYUVPlayerDlg::ShowOpenedFrame()
     this->Read(m_nCurrentFrame);
     this->Show();
 
-    return;
-    // 设置YUV格式
-    switch (m_nYuvFormat)
-    {
-    case FMT_YUV420:
-    case FMT_YV12:
-    case FMT_NV12:
-    case FMT_NV21:
-        m_iYuvSize = m_nWidth * m_nHeight * 3 / 2;
-        break;
-    case FMT_YUV422:
-    case FMT_YV16:
-    case FMT_YUYV:
-    case FMT_YVYU:
-    case FMT_UYVY:
-    case FMT_VYUY:
-    case FMT_NV16:
-    case FMT_NV61:
-        m_iYuvSize = m_nWidth * m_nHeight * 2;
-        break;
-    case FMT_YUV444:
-        m_iYuvSize = m_nWidth * m_nHeight * 3;
-        break;
-    case FMT_Y:
-        m_iYuvSize = m_nWidth * m_nHeight;
-        break;
-    default:
-        break;
-    }
-
-    m_iRgbSize = m_nWidth * m_nHeight * 3 + 54;
-
-    m_pbYuvData = new char[m_iYuvSize];
-    m_pbRgbData  = new char[m_iRgbSize];
-
-    // 打开文件
-    // 暂时只支持一个文件，如果已经打开，就关闭
-    // TODO：此处应该能优化
-    if (CFile::hFileNull != m_cFile.m_hFile)
-    {
-        m_cFile.Close();
-    }
-    if (!m_cFile.Open(m_strPathName.GetBuffer(), CFile::modeRead))
-    {
-        MessageBox(_T("打开YUV文件失败!"));
-        return;
-    }
-    m_cFile.Read(m_pbYuvData, m_iYuvSize);
-
-    // 先添加BMP头
-    m_bmHeader.bfType = 'MB';
-    m_bmHeader.bfSize = m_iRgbSize + sizeof(BITMAPFILEHEADER) + sizeof(BITMAPINFOHEADER);
-    m_bmHeader.bfReserved1 = 0;
-    m_bmHeader.bfReserved2 = 0;
-    m_bmHeader.bfOffBits = sizeof(BITMAPFILEHEADER) + sizeof(BITMAPINFOHEADER);
-    m_bmInfo.bmiHeader.biSize   = sizeof(BITMAPINFOHEADER);
-    m_bmInfo.bmiHeader.biWidth  = m_nWidth;
-    // note BMP图像是倒过来的
-    m_bmInfo.bmiHeader.biHeight = -m_nHeight;
-    m_bmInfo.bmiHeader.biPlanes = 1;
-    m_bmInfo.bmiHeader.biBitCount = 24;
-    m_bmInfo.bmiHeader.biCompression = BI_RGB;
-    m_bmInfo.bmiHeader.biSizeImage   = m_iRgbSize;
-    m_bmInfo.bmiHeader.biXPelsPerMeter = 0;
-    m_bmInfo.bmiHeader.biYPelsPerMeter = 0;
-    m_bmInfo.bmiHeader.biClrUsed = 0;
-    m_bmInfo.bmiHeader.biClrImportant = 0;
-
-    memcpy(m_pbRgbData, &m_bmHeader, sizeof(BITMAPFILEHEADER));
-    memcpy(m_pbRgbData+sizeof(BITMAPFILEHEADER), &m_bmInfo, sizeof(BITMAPINFOHEADER));
-
-    // 再转换格式
-    yuv_to_rgb24((YUV_TYPE)m_nYuvFormat, (unsigned char *)m_pbYuvData, (unsigned char *)m_pbRgbData+54, m_nWidth, m_nHeight);
-    // rgb->bgr
-    swargb((BYTE*)m_pbRgbData+54, m_iRgbSize-54);
-    //yuv420_to_rgb24((unsigned char *)m_pbYuvData, (unsigned char *)m_pbRgbData+54, m_nWidth, m_nHeight);
-    // 显示
-    ShowPicture((BYTE *)m_pbRgbData, m_iRgbSize);
+    m_bSaveFrame.EnableWindow(TRUE);
+    m_bPlay.EnableWindow(TRUE);
+    //m_bStop.EnableWindow(TRUE);
+    m_bPrevFrame.EnableWindow(TRUE);
+    m_bNextFrame.EnableWindow(TRUE);
+    m_bFirstFrame.EnableWindow(TRUE);
+    m_bLastFrame.EnableWindow(TRUE);
 }
 
 inline void RenderBitmap(CWnd *pWnd, Bitmap* pbmp)
@@ -907,6 +835,9 @@ void CYUVPlayerDlg::SetParentParameters(int width, int height, int fps, int fmt,
     m_nYuvFormat = fmt;
     m_fLoop = loop;
 
+    // 恢复原始状态
+    if (!IsOpen()) return;
+
     ShowOpenedFrame();
 }
 
@@ -916,12 +847,6 @@ UINT Play(LPVOID pParam)
     CYUVPlayerDlg* pWin = (CYUVPlayerDlg *)pParam;  // 对话框类
 
     int iTimeSpan = 1000 / pWin->m_nFps;
-
-    if (CFile::hFileNull == pWin->m_cFile.m_hFile)
-    {
-        //MessageBox("请先打开文件");
-        return -1;
-    }
 
     HANDLE hPlay = OpenMutex(MUTEX_ALL_ACCESS, FALSE, _T("Play"));
 
@@ -940,48 +865,18 @@ UINT Play(LPVOID pParam)
         {
             ReleaseMutex(hPlay);
         }
-        pWin->m_cFile.Seek(pWin->m_iYuvSize * pWin->m_nCurrentFrame, SEEK_SET);
-        pWin->m_cFile.Read(pWin->m_pbYuvData, pWin->m_iYuvSize);
 
-        // 先添加BMP头
-        pWin->m_bmHeader.bfType = 'MB';
-        pWin->m_bmHeader.bfSize = pWin->m_iRgbSize + sizeof(BITMAPFILEHEADER) + sizeof(BITMAPINFOHEADER);
-        pWin->m_bmHeader.bfReserved1 = 0;
-        pWin->m_bmHeader.bfReserved2 = 0;
-        pWin->m_bmHeader.bfOffBits = sizeof(BITMAPFILEHEADER) + sizeof(BITMAPINFOHEADER);
-        pWin->m_bmInfo.bmiHeader.biSize   = sizeof(BITMAPINFOHEADER);
-        pWin->m_bmInfo.bmiHeader.biWidth  = pWin->m_nWidth;
-        // note BMP图像是倒过来的
-        pWin->m_bmInfo.bmiHeader.biHeight = -pWin->m_nHeight;;
-        pWin->m_bmInfo.bmiHeader.biPlanes = 1;
-        pWin->m_bmInfo.bmiHeader.biBitCount = 24;
-        pWin->m_bmInfo.bmiHeader.biCompression = BI_RGB;
-        pWin->m_bmInfo.bmiHeader.biSizeImage   = pWin->m_iRgbSize;
-        pWin->m_bmInfo.bmiHeader.biXPelsPerMeter = 0;
-        pWin->m_bmInfo.bmiHeader.biYPelsPerMeter = 0;
-        pWin->m_bmInfo.bmiHeader.biClrUsed = 0;
-        pWin->m_bmInfo.bmiHeader.biClrImportant = 0;
-
-        memcpy(pWin->m_pbRgbData, &(pWin->m_bmHeader), sizeof(BITMAPFILEHEADER));
-        memcpy(pWin->m_pbRgbData+sizeof(BITMAPFILEHEADER), &(pWin->m_bmInfo), sizeof(BITMAPINFOHEADER));
-
-        // 再转换格式
-        yuv_to_rgb24((YUV_TYPE)pWin->m_nYuvFormat, (unsigned char *)pWin->m_pbYuvData, (unsigned char *)pWin->m_pbRgbData+54, pWin->m_nWidth, pWin->m_nHeight);
-
-        // rgb->bgr
-        swargb((BYTE*)pWin->m_pbRgbData+54, pWin->m_iRgbSize-54);
-        // 显示
-        pWin->ShowPicture((BYTE *)pWin->m_pbRgbData, pWin->m_iRgbSize);
+        pWin->Read(pWin->m_nCurrentFrame);
+        pWin->Show();
 
         DWORD t2 = GetTickCount();
         int t = t2 - t1;
         if (t < iTimeSpan)
             Sleep(iTimeSpan - t);
 
-        pWin->ShowFrameCount();
         pWin->m_nCurrentFrame++;
     }
-
+    pWin->m_nCurrentFrame--; // why?
     pWin->m_bStop.EnableWindow(FALSE);
     pWin->m_bPlay.SetBitmap(LoadBitmap(AfxGetInstanceHandle(), MAKEINTRESOURCE(IDB_BM_PLAY)));
 

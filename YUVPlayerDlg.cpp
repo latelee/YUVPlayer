@@ -72,6 +72,8 @@ CYUVPlayerDlg::CYUVPlayerDlg(CWnd* pParent /*=NULL*/)
     m_pbYuvData = NULL;
     m_pbRgbData = NULL;
     m_pWinThread = NULL;
+
+    m_nTotalFrame = m_nCurrentFrame = 0;
 }
 
 CYUVPlayerDlg::~CYUVPlayerDlg()
@@ -665,10 +667,121 @@ void CYUVPlayerDlg::OnDropFiles(HDROP hDropInfo)
 
 /////////////////////////////
 // 内部实现
+void CYUVPlayerDlg::Open()
+{
+    // 打开文件
+    // 暂时只支持一个文件，如果已经打开，就关闭
+    // TODO：此处应该能优化
+    if (CFile::hFileNull != m_cFile.m_hFile)
+    {
+        m_cFile.Close();
+    }
+    if (!m_cFile.Open(m_strPathName.GetBuffer(), CFile::modeRead))
+    {
+        MessageBox(_T("打开YUV文件失败!"));
+        return;
+    }
+
+    m_nCurrentFrame  = 0;
+}
+
+void CYUVPlayerDlg::Malloc()
+{
+    // 设置YUV格式
+    switch (m_nYuvFormat)
+    {
+    case FMT_YUV420:
+    case FMT_YV12:
+    case FMT_NV12:
+    case FMT_NV21:
+        m_iYuvSize = m_nWidth * m_nHeight * 3 / 2;
+        break;
+    case FMT_YUV422:
+    case FMT_YV16:
+    case FMT_YUYV:
+    case FMT_YVYU:
+    case FMT_UYVY:
+    case FMT_VYUY:
+    case FMT_NV16:
+    case FMT_NV61:
+        m_iYuvSize = m_nWidth * m_nHeight * 2;
+        break;
+    case FMT_YUV444:
+        m_iYuvSize = m_nWidth * m_nHeight * 3;
+        break;
+    case FMT_Y:
+        m_iYuvSize = m_nWidth * m_nHeight;
+        break;
+    default:
+        break;
+    }
+
+    m_iRgbSize = m_nWidth * m_nHeight * 3 + 54;
+
+    m_pbYuvData = new char[m_iYuvSize];
+    m_pbRgbData  = new char[m_iRgbSize];
+
+    m_nTotalFrame = m_cFile.GetLength() / m_iYuvSize;
+    this->ShowFrameCount();
+}
+
+void CYUVPlayerDlg::Read(INT nCurrentFrame)
+{
+    m_cFile.Seek(m_iYuvSize * nCurrentFrame, SEEK_SET);
+    m_cFile.Read(m_pbYuvData, m_iYuvSize);
+}
+
+void CYUVPlayerDlg::Show()
+{
+    // 先添加BMP头
+    m_bmHeader.bfType = 'MB';
+    m_bmHeader.bfSize = m_iRgbSize + sizeof(BITMAPFILEHEADER) + sizeof(BITMAPINFOHEADER);
+    m_bmHeader.bfReserved1 = 0;
+    m_bmHeader.bfReserved2 = 0;
+    m_bmHeader.bfOffBits = sizeof(BITMAPFILEHEADER) + sizeof(BITMAPINFOHEADER);
+    m_bmInfo.bmiHeader.biSize   = sizeof(BITMAPINFOHEADER);
+    m_bmInfo.bmiHeader.biWidth  = m_nWidth;
+    // note BMP图像是倒过来的
+    m_bmInfo.bmiHeader.biHeight = -m_nHeight;
+    m_bmInfo.bmiHeader.biPlanes = 1;
+    m_bmInfo.bmiHeader.biBitCount = 24;
+    m_bmInfo.bmiHeader.biCompression = BI_RGB;
+    m_bmInfo.bmiHeader.biSizeImage   = m_iRgbSize;
+    m_bmInfo.bmiHeader.biXPelsPerMeter = 0;
+    m_bmInfo.bmiHeader.biYPelsPerMeter = 0;
+    m_bmInfo.bmiHeader.biClrUsed = 0;
+    m_bmInfo.bmiHeader.biClrImportant = 0;
+
+    memcpy(m_pbRgbData, &m_bmHeader, sizeof(BITMAPFILEHEADER));
+    memcpy(m_pbRgbData+sizeof(BITMAPFILEHEADER), &m_bmInfo, sizeof(BITMAPINFOHEADER));
+
+    // 再转换格式
+    yuv_to_rgb24((YUV_TYPE)m_nYuvFormat, (unsigned char *)m_pbYuvData, (unsigned char *)m_pbRgbData+54, m_nWidth, m_nHeight);
+    // rgb->bgr
+    swargb((BYTE*)m_pbRgbData+54, m_iRgbSize-54);
+    //yuv420_to_rgb24((unsigned char *)m_pbYuvData, (unsigned char *)m_pbRgbData+54, m_nWidth, m_nHeight);
+    // 显示
+    ShowPicture((BYTE *)m_pbRgbData, m_iRgbSize);
+}
+
+void CYUVPlayerDlg::ShowFrameCount()
+{
+    // 显示总帧数
+    CString strTemp;
+    strTemp.Format(_T("%d/%d"), m_nCurrentFrame+1, m_nTotalFrame);
+    GetDlgItem(IDC_STATIC_FRAMECNT)->SetWindowText(strTemp);
+}
 
 // 打开文件 时显示第一帧
 void CYUVPlayerDlg::ShowOpenedFrame()
 {
+    this->Open();
+    this->Malloc();
+    
+    this->Read(m_nCurrentFrame);
+    this->Show();
+
+    return;
     // 设置YUV格式
     switch (m_nYuvFormat)
     {
@@ -804,7 +917,6 @@ void CYUVPlayerDlg::SetParentParameters(int width, int height, int fps, int fmt,
 // 播放线程
 UINT Play(LPVOID pParam)
 {
-    int i = 0;
     CYUVPlayerDlg* pWin = (CYUVPlayerDlg *)pParam;  // 对话框类
 
     int iTimeSpan = 1000 / pWin->m_nFps;
@@ -831,6 +943,7 @@ UINT Play(LPVOID pParam)
     //    MessageBox("Check");
     while (!bEof)
     {
+        pWin->m_nCurrentFrame++;
         DWORD t1 = GetTickCount();
 
         if (WAIT_OBJECT_0 == WaitForSingleObject(hPlay,INFINITE))
@@ -845,8 +958,8 @@ UINT Play(LPVOID pParam)
             //i = 0;
             break;
         }
-        i++;
-        pWin->m_cFile.Seek(pWin->m_iYuvSize * i, SEEK_SET);
+        
+        pWin->m_cFile.Seek(pWin->m_iYuvSize * pWin->m_nCurrentFrame, SEEK_SET);
         // 先添加BMP头
         pWin->m_bmHeader.bfType = 'MB';
         pWin->m_bmHeader.bfSize = pWin->m_iRgbSize + sizeof(BITMAPFILEHEADER) + sizeof(BITMAPINFOHEADER);
@@ -883,6 +996,8 @@ UINT Play(LPVOID pParam)
             Sleep(iTimeSpan - t);
 
         //strTemp.Format("正在播放: %d %d %d %d", iTimeSpan, t1, t2, t);
+        
+        pWin->ShowFrameCount();
     }
 
     pWin->m_bStop.EnableWindow(FALSE);

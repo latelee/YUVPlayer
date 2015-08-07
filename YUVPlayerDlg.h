@@ -55,7 +55,17 @@ public:
     CFile m_cFile;
     CWinThread* m_pWinThread;
 
+    //UINT m_nFileSize;
+    UINT m_nTotalFrame;
+    UINT m_nCurrentFrame;
+
     // 共用内部函数
+    void Open();
+    void Malloc();
+    void Read(INT nCurrentFrame);
+    void Show();
+    void ShowFrameCount();
+
     void ShowOpenedFrame();
     void ShowPicture(BYTE* pbData, int iSize);
 

@@ -13,10 +13,6 @@
 #define new DEBUG_NEW
 #endif
 
-static BOOL g_iYuv420Init = FALSE;
-static BOOL g_iYuv422Init = FALSE;
-static BOOL g_iEndFile = FALSE;
-
 UINT Play(LPVOID pParam);
 
 // 用于应用程序“关于”菜单项的 CAboutDlg 对话框
@@ -565,7 +561,7 @@ void CYUVPlayerDlg::OnSize(UINT nType, int cx, int cy)
     CWnd *pWnd = GetDlgItem(IDC_VIDEO);
     if (pWnd)
     {
-        pWnd->MoveWindow(0, 0, cx, cy-26-20-21);
+        pWnd->MoveWindow(0, 0, cx, cy-26-20-21-4-4);
         pWnd->Invalidate();
         pWnd->UpdateData();
     }
@@ -573,7 +569,7 @@ void CYUVPlayerDlg::OnSize(UINT nType, int cx, int cy)
     pWnd = GetDlgItem(m_nStartX[0][10]);
     if (pWnd)
     {
-       pWnd->SetWindowPos(NULL,cx-30,cy-26,0,0,SWP_NOZORDER|SWP_NOSIZE);
+       pWnd->SetWindowPos(NULL,cx-30-2,cy-26-4,0,0,SWP_NOZORDER|SWP_NOSIZE);
     }
 
     int startx = 2;
@@ -581,7 +577,7 @@ void CYUVPlayerDlg::OnSize(UINT nType, int cx, int cy)
     pWnd = GetDlgItem(m_nStartX[0][0]);
     if (pWnd)
     {
-        pWnd->SetWindowPos(NULL,startx+m_nStartX[1][0],cy-26-20-21,0,0,SWP_NOZORDER|SWP_NOSIZE);
+        pWnd->SetWindowPos(NULL,startx+m_nStartX[1][0],cy-26-20-21-4,0,0,SWP_NOZORDER|SWP_NOSIZE);
     }
     // 滚动条
     pWnd = GetDlgItem(m_nStartX[0][1]);
@@ -589,7 +585,7 @@ void CYUVPlayerDlg::OnSize(UINT nType, int cx, int cy)
     {
         //pWnd->MoveWindow(startx+0, cy-26-26, cx, cy-26-20-21);
         //pWnd->Invalidate();
-        pWnd->SetWindowPos( NULL,startx+m_nStartX[1][1],cy-26-26,cx,26,SWP_NOZORDER);
+        pWnd->SetWindowPos( NULL,startx+m_nStartX[1][1],cy-26-26-4,cx,26,SWP_NOZORDER);
     }
     // 水平位置相同的按钮
     for (int i = 2; i < 10; i++)
@@ -597,7 +593,7 @@ void CYUVPlayerDlg::OnSize(UINT nType, int cx, int cy)
         pWnd = GetDlgItem(m_nStartX[0][i]);
         if (pWnd)
         {
-            pWnd->SetWindowPos(NULL,startx+m_nStartX[1][i],cy-26,0,0,SWP_NOZORDER|SWP_NOSIZE);
+            pWnd->SetWindowPos(NULL,startx+m_nStartX[1][i],cy-26-4,0,0,SWP_NOZORDER|SWP_NOSIZE);
         }
     }
 }
@@ -721,7 +717,7 @@ void CYUVPlayerDlg::Malloc()
     m_pbYuvData = new char[m_iYuvSize];
     m_pbRgbData  = new char[m_iRgbSize];
 
-    m_nTotalFrame = m_cFile.GetLength() / m_iYuvSize;
+    m_nTotalFrame = (UINT)(m_cFile.GetLength() / m_iYuvSize);
     this->ShowFrameCount();
 }
 
@@ -936,30 +932,17 @@ UINT Play(LPVOID pParam)
         MessageBox(pWin->m_hWnd, msg, NULL, MB_OK);
     }
 
-    CString strTemp;
-    BOOL bEof = FALSE;
-
-    //if (m_cLoop.GetCheck())
-    //    MessageBox("Check");
-    while (!bEof)
+    while (pWin->m_nCurrentFrame < pWin->m_nTotalFrame)
     {
-        pWin->m_nCurrentFrame++;
         DWORD t1 = GetTickCount();
 
         if (WAIT_OBJECT_0 == WaitForSingleObject(hPlay,INFINITE))
         {
             ReleaseMutex(hPlay);
         }
-        if (pWin->m_iYuvSize != pWin->m_cFile.Read(pWin->m_pbYuvData, pWin->m_iYuvSize))
-        {
-            bEof = TRUE;
-            g_iEndFile = TRUE;
-            //m_cFile.SeekToBegin();
-            //i = 0;
-            break;
-        }
-        
         pWin->m_cFile.Seek(pWin->m_iYuvSize * pWin->m_nCurrentFrame, SEEK_SET);
+        pWin->m_cFile.Read(pWin->m_pbYuvData, pWin->m_iYuvSize);
+
         // 先添加BMP头
         pWin->m_bmHeader.bfType = 'MB';
         pWin->m_bmHeader.bfSize = pWin->m_iRgbSize + sizeof(BITMAPFILEHEADER) + sizeof(BITMAPINFOHEADER);
@@ -984,7 +967,7 @@ UINT Play(LPVOID pParam)
 
         // 再转换格式
         yuv_to_rgb24((YUV_TYPE)pWin->m_nYuvFormat, (unsigned char *)pWin->m_pbYuvData, (unsigned char *)pWin->m_pbRgbData+54, pWin->m_nWidth, pWin->m_nHeight);
-        //yuv420_to_rgb24((unsigned char *)pWin->m_pbYuvData, (unsigned char *)pWin->m_pbRgbData+54, pWin->m_nWidth, pWin->m_nHeight);
+
         // rgb->bgr
         swargb((BYTE*)pWin->m_pbRgbData+54, pWin->m_iRgbSize-54);
         // 显示
@@ -995,9 +978,8 @@ UINT Play(LPVOID pParam)
         if (t < iTimeSpan)
             Sleep(iTimeSpan - t);
 
-        //strTemp.Format("正在播放: %d %d %d %d", iTimeSpan, t1, t2, t);
-        
         pWin->ShowFrameCount();
+        pWin->m_nCurrentFrame++;
     }
 
     pWin->m_bStop.EnableWindow(FALSE);

@@ -434,7 +434,7 @@ void CYUVPlayerDlg::OnBnClickedButtonOpen()
 {
     wchar_t szFilter[] = _T("YUV Files(*.yuv;*.raw)|*.yuv;*.raw|All Files(*.*)|*.*||");
     CFileDialog fileDlg(TRUE, _T("YUV"), NULL, OFN_HIDEREADONLY | OFN_NOCHANGEDIR | OFN_FILEMUSTEXIST, szFilter);
-    fileDlg.GetOFN().lpstrTitle = _T("选择YUV文件");   // 标题
+    fileDlg.GetOFN().lpstrTitle = _T("Open YUV File");   // 标题
     if (fileDlg.DoModal() != IDOK)
         return;
 
@@ -448,10 +448,47 @@ void CYUVPlayerDlg::OnBnClickedButtonOpen()
     return;
 }
 
-
 void CYUVPlayerDlg::OnBnClickedButtonSave()
 {
+    // 默认yuv
+    wchar_t szFilter[128] = _T("YUV Files(*.%s)|*.%s|BMP(*.bmp)|*.bmp||");// = _T("YUV Files(*.yuv)|*.yuv;*.raw|BMP(*.bmp)|*.bmp|All Files(*.*)|*.*||");
 
+    //this->SaveFrame(1);
+    CFile cFile;
+    CString strFile;
+    wchar_t szFileName[128] = {0};
+    wchar_t szExt[16] = {0};
+    wchar_t* pExt = _T("yuv");
+    char* pData = m_pbYuvData;
+    UINT nSize = m_iYuvSize;
+
+    int nType = 0;
+
+    // 找文件名
+    _wsplitpath(m_strPathName, NULL, NULL, szFileName, szExt);
+    if (wcscmp(szExt, _T("yuv")))
+    {
+        swprintf_s(szFilter, _T("YUV Files(*.%s)|*.%s|BMP(*.bmp)|*.bmp||"), &szExt[1], &szExt[1]);
+    }
+    
+    strFile.Format(_T("%s_%d.%s"), szFileName, m_nCurrentFrame, pExt);
+
+    CFileDialog fileDlg(FALSE, _T("yuv"), strFile.GetBuffer(), OFN_HIDEREADONLY | OFN_NOCHANGEDIR | OFN_OVERWRITEPROMPT, szFilter);
+    fileDlg.GetOFN().lpstrTitle = _T("Save Frame");
+    if (fileDlg.DoModal() != IDOK)
+        return;
+
+    CString strTemp = fileDlg.GetFileExt();
+    if (!strTemp.Compare(_T("bmp")))
+    {
+        pExt = _T("bmp");
+        pData = m_pbRgbData;
+        nSize = m_iRgbSize;
+    }
+
+    cFile.Open(fileDlg.GetFileName(), CFile::modeWrite|CFile::modeCreate);
+    cFile.Write(pData, nSize);
+    cFile.Close();
 }
 
 
@@ -509,9 +546,9 @@ void CYUVPlayerDlg::OnBnClickedButtonStop()
 void CYUVPlayerDlg::OnBnClickedButtonPrev()
 {
     m_nCurrentFrame--;
-    if (m_nCurrentFrame < 0)
+    if (m_nCurrentFrame <= 1)
     {
-        m_nCurrentFrame = 0;
+        m_nCurrentFrame = 1;
         return;
     }
     this->Read(m_nCurrentFrame);
@@ -523,9 +560,9 @@ void CYUVPlayerDlg::OnBnClickedButtonNext()
 {
     m_nCurrentFrame++;
 
-    if (m_nCurrentFrame > m_nTotalFrame - 1)
+    if (m_nCurrentFrame >= m_nTotalFrame)
     {
-        m_nCurrentFrame = m_nTotalFrame - 1;
+        m_nCurrentFrame = m_nTotalFrame;
 
     }
     this->Read(m_nCurrentFrame);
@@ -535,7 +572,7 @@ void CYUVPlayerDlg::OnBnClickedButtonNext()
 
 void CYUVPlayerDlg::OnBnClickedButtonFirst()
 {
-    m_nCurrentFrame = 0;
+    m_nCurrentFrame = 1;
     this->Read(m_nCurrentFrame);
     this->Show();
 }
@@ -543,7 +580,7 @@ void CYUVPlayerDlg::OnBnClickedButtonFirst()
 
 void CYUVPlayerDlg::OnBnClickedButtonLast()
 {
-    m_nCurrentFrame = m_nTotalFrame - 1;
+    m_nCurrentFrame = m_nTotalFrame;
     this->Read(m_nCurrentFrame);
     this->Show();
 }
@@ -620,15 +657,16 @@ void CYUVPlayerDlg::OnDropFiles(HDROP hDropInfo)
     // note 用m_strPathName的话，关闭窗口后，进程还在
     CDialogEx::OnDropFiles(hDropInfo);
     wchar_t* pFilePathName =(wchar_t *)malloc(MAX_URL_LENGTH);
-    ::DragQueryFile(hDropInfo, 0, pFilePathName, MAX_URL_LENGTH);  // 获取拖放文件的完整文件名，最关键！
+    ::DragQueryFile(hDropInfo, 0, pFilePathName, MAX_URL_LENGTH);
     m_strPathName.Format(_T("%s"), pFilePathName);
-    ::DragFinish(hDropInfo);   // 注意这个不能少，它用于释放Windows 为处理文件拖放而分配的内存
+    ::DragFinish(hDropInfo);
 
     // 显示标题
     CString strTemp;
     strTemp.Format(_T("%s-%s"), pFilePathName, APP_NAM);
     this->SetWindowText(strTemp);
 
+    // 找文件名
     wchar_t* tmp = wcsrchr(pFilePathName, '\\');
     char szFilename[256] = {0};
     WideCharToMultiByte(CP_ACP, 0, tmp+1, wcslen(tmp+1), szFilename, 256, NULL, NULL);
@@ -668,8 +706,6 @@ void CYUVPlayerDlg::Open()
         MessageBox(_T("打开YUV文件失败!"));
         return;
     }
-
-    m_nCurrentFrame  = 0;
 }
 
 BOOL CYUVPlayerDlg::IsOpen()
@@ -713,6 +749,18 @@ void CYUVPlayerDlg::Malloc()
 
     m_iRgbSize = m_nWidth * m_nHeight * 3 + 54;
 
+    if (m_pbYuvData != NULL)
+    {
+        delete[] m_pbYuvData;
+        m_pbYuvData = NULL;
+    }
+
+    if (m_pbRgbData != NULL)
+    {
+        delete[] m_pbRgbData;
+        m_pbRgbData = NULL;
+    }
+
     m_pbYuvData = new char[m_iYuvSize];
     m_pbRgbData  = new char[m_iRgbSize];
 
@@ -722,8 +770,8 @@ void CYUVPlayerDlg::Malloc()
 
 void CYUVPlayerDlg::Read(INT nCurrentFrame)
 {
-    this->ShowFrameCount(nCurrentFrame); // todo
-    m_cFile.Seek(m_iYuvSize * nCurrentFrame, SEEK_SET);
+    this->ShowFrameCount(nCurrentFrame); // 读一帧时，顺便显示出当前帧
+    m_cFile.Seek(m_iYuvSize * (nCurrentFrame - 1), SEEK_SET);
     m_cFile.Read(m_pbYuvData, m_iYuvSize);
 }
 
@@ -763,13 +811,15 @@ void CYUVPlayerDlg::ShowFrameCount(int nCurrentFrame)
 {
     // 显示当前帧/总帧数
     CString strTemp;
-    strTemp.Format(_T("%d/%d"), nCurrentFrame+1, m_nTotalFrame);
+    strTemp.Format(_T("%d/%d"), nCurrentFrame, m_nTotalFrame);
     GetDlgItem(IDC_STATIC_FRAMECNT)->SetWindowText(strTemp);
 }
 
 // 打开文件 时显示第一帧
 void CYUVPlayerDlg::ShowOpenedFrame()
 {
+    m_nCurrentFrame = 1;
+
     this->Open();
     this->Malloc();
     
@@ -857,7 +907,7 @@ UINT Play(LPVOID pParam)
         MessageBox(pWin->m_hWnd, msg, NULL, MB_OK);
     }
 
-    while (pWin->m_nCurrentFrame < pWin->m_nTotalFrame)
+    while (pWin->m_nCurrentFrame <= pWin->m_nTotalFrame)
     {
         DWORD t1 = GetTickCount();
 
@@ -876,7 +926,7 @@ UINT Play(LPVOID pParam)
 
         pWin->m_nCurrentFrame++;
     }
-    pWin->m_nCurrentFrame--; // why?
+    pWin->m_nCurrentFrame--; // 上述循环结束后，m_nCurrentFrame会多一次
     pWin->m_bStop.EnableWindow(FALSE);
     pWin->m_bPlay.SetBitmap(LoadBitmap(AfxGetInstanceHandle(), MAKEINTRESOURCE(IDB_BM_PLAY)));
 

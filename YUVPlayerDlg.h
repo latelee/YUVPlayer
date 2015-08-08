@@ -47,7 +47,7 @@ public:
     char*   m_pbYuvData;    // YUV数据
     char*   m_pbRgbData;    // RGB数据
     UINT    m_iYuvSize; // 一幅图像大小
-    UINT    m_iRgbSize; //
+    UINT    m_iRgbSize; // BMP图的大小
 
     BITMAPFILEHEADER m_bmHeader;
     BITMAPINFO       m_bmInfo;
@@ -55,9 +55,8 @@ public:
     CFile m_cFile;
     CWinThread* m_pWinThread;
 
-    //UINT m_nFileSize;
-    INT m_nTotalFrame;
-    INT m_nCurrentFrame;
+    INT m_nTotalFrame;   // 总帧数，由文件大小及YUV大小计算而得
+    INT m_nCurrentFrame; // 当前帧，从1开始计算，但seek文件时会自动减1
 
     // 共用内部函数
     void Open();

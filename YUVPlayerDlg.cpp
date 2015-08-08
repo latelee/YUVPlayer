@@ -469,6 +469,7 @@ void CYUVPlayerDlg::OnBnClickedButtonSave()
     if (wcscmp(szExt, _T("yuv")))
     {
         swprintf_s(szFilter, _T("YUV Files(*.%s)|*.%s|BMP(*.bmp)|*.bmp||"), &szExt[1], &szExt[1]);
+        pExt = &szExt[1];
     }
     
     strFile.Format(_T("%s_%d.%s"), szFileName, m_nCurrentFrame, pExt);

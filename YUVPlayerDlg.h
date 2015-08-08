@@ -92,7 +92,6 @@ public:
     afx_msg void OnContextMenu(CWnd* /*pWnd*/, CPoint /*point*/);
 
     afx_msg void OnFileOpen();
-    afx_msg void OnFileClose();
     afx_msg void OnFileSave();
     afx_msg void OnFileExit();
     afx_msg void OnPlayingPlay();

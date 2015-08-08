@@ -107,8 +107,7 @@ BEGIN_MESSAGE_MAP(CYUVPlayerDlg, CDialogEx)
     ON_WM_NCHITTEST()
     ON_WM_CONTEXTMENU()
     ON_COMMAND(ID_FILE_OPEN, &CYUVPlayerDlg::OnFileOpen)
-    ON_COMMAND(ID_FILE_CLOSE, &CYUVPlayerDlg::OnFileClose)
-    ON_COMMAND(ID_FILE_SAVE, &CYUVPlayerDlg::OnFileSave)
+    ON_COMMAND(ID_FILE_SAVEFRAME, &CYUVPlayerDlg::OnFileSave)
     ON_COMMAND(ID_FILE_EXIT, &CYUVPlayerDlg::OnFileExit)
     ON_COMMAND(ID_PLAYING_PLAY, &CYUVPlayerDlg::OnPlayingPlay)
     ON_COMMAND(ID_PLAYING_SETTING, &CYUVPlayerDlg::OnPlayingSetting)
@@ -219,6 +218,9 @@ BOOL CYUVPlayerDlg::OnInitDialog()
 
     m_fInit = TRUE;
     m_fShowBlack = TRUE;
+
+    //GetDlgItem(ID_FILE_SAVEFRAME)->EnableWindow(FALSE);
+    //GetMenu()->GetSubMenu(3)->EnableMenuItem(1,MF_BYPOSITION | MF_ENABLED);
 	return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
 }
 
@@ -343,25 +345,19 @@ void CYUVPlayerDlg::OnContextMenu(CWnd* pWnd, CPoint point)
 /////////////////////////////////////////// ------> 标题菜单事件
 void CYUVPlayerDlg::OnFileOpen()
 {
-
-}
-
-
-void CYUVPlayerDlg::OnFileClose()
-{
-
+    OnBnClickedButtonOpen();
 }
 
 
 void CYUVPlayerDlg::OnFileSave()
 {
-
+    OnBnClickedButtonSave();
 }
 
 
 void CYUVPlayerDlg::OnFileExit()
 {
-
+    OnRExit();
 }
 
 
@@ -382,17 +378,18 @@ void CYUVPlayerDlg::OnPlayingStop()
 
 }
 
-
+/*
+程序可自动通过文件名解析YUV格式及宽高，文件名称需要有YUV格式字符串及分辨率。YUV格式参考设置对话框除Y以外所有的格式。分辨率可用qcif、cif、720p、1080p或直接用宽x高，示例：foo_yuv422_176x144.yuv。
+*/
 void CYUVPlayerDlg::OnHelpHelp()
 {
-
-    MessageBox(_T("Help me"));
+    wchar_t* help = _T("YUV播放器说明：\r\n1、支持常见YUV格式文件播放；\r\n2、支持保存YUV或BMP文件；\r\n3、直接拖拽文件到播放器或通过菜单打开文件；\r\n\r\n\r\nTrick\r\n程序可自动通过文件名解析YUV格式及宽高，文件名称需要有YUV格式字符串及分辨率。YUV格式参考设置对话框除Y以外所有的格式。分辨率可用qcif、cif、720p、1080p或直接用宽x高，示例：foo_yuv422_176x144.yuv。");
+    MessageBox((LPCTSTR)help);
 }
 
 
 void CYUVPlayerDlg::OnHelpAbout()
 {
-
     CAboutDlg dlgAbout;
     dlgAbout.DoModal();
 }
@@ -401,7 +398,7 @@ void CYUVPlayerDlg::OnHelpAbout()
 /////////////////////////////////////////// ------> 右键菜单事件
 void CYUVPlayerDlg::OnROpen()
 {
-
+    OnBnClickedButtonOpen();
 }
 
 
@@ -439,10 +436,21 @@ void CYUVPlayerDlg::OnBnClickedButtonOpen()
         return;
 
     m_strPathName = fileDlg.GetPathName();
+
+    // 显示标题
     CString strTemp;
     strTemp.Format(_T("%s-%s"), m_strPathName.GetBuffer(), APP_NAM);
     this->SetWindowText(strTemp);
 
+    // 找文件名
+    wchar_t* tmp = wcsrchr(m_strPathName.GetBuffer(), '\\');
+    char szFilename[256] = {0};
+    WideCharToMultiByte(CP_ACP, 0, tmp+1, wcslen(tmp+1), szFilename, 256, NULL, NULL);
+
+    m_pSettingDlg->ParseFilename(szFilename);
+    m_pSettingDlg->SetParametersToParentWnd(m_nWidth, m_nHeight, m_nFps, m_nYuvFormat, m_fLoop);
+
+    // 显示第一帧
     ShowOpenedFrame();
 
     return;
@@ -451,9 +459,8 @@ void CYUVPlayerDlg::OnBnClickedButtonOpen()
 void CYUVPlayerDlg::OnBnClickedButtonSave()
 {
     // 默认yuv
-    wchar_t szFilter[128] = _T("YUV Files(*.%s)|*.%s|BMP(*.bmp)|*.bmp||");// = _T("YUV Files(*.yuv)|*.yuv;*.raw|BMP(*.bmp)|*.bmp|All Files(*.*)|*.*||");
+    wchar_t szFilter[128] = _T("YUV Files(*.%s)|*.%s|BMP(*.bmp)|*.bmp||");
 
-    //this->SaveFrame(1);
     CFile cFile;
     CString strFile;
     wchar_t szFileName[128] = {0};
@@ -471,7 +478,7 @@ void CYUVPlayerDlg::OnBnClickedButtonSave()
         swprintf_s(szFilter, _T("YUV Files(*.%s)|*.%s|BMP(*.bmp)|*.bmp||"), &szExt[1], &szExt[1]);
         pExt = &szExt[1];
     }
-    
+
     strFile.Format(_T("%s_%d.%s"), szFileName, m_nCurrentFrame, pExt);
 
     CFileDialog fileDlg(FALSE, _T("yuv"), strFile.GetBuffer(), OFN_HIDEREADONLY | OFN_NOCHANGEDIR | OFN_OVERWRITEPROMPT, szFilter);

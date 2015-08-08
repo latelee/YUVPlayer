@@ -13,6 +13,9 @@
 #define new DEBUG_NEW
 #endif
 
+int CYUVPlayerDlg::m_fPause = FALSE;
+int CYUVPlayerDlg::m_fEnd = FALSE;
+
 UINT Play(LPVOID pParam);
 
 // 用于应用程序“关于”菜单项的 CAboutDlg 对话框
@@ -544,6 +547,7 @@ void CYUVPlayerDlg::OnBnClickedButtonSave()
 }
 
 
+
 void CYUVPlayerDlg::OnBnClickedButtonPlay()
 {
     static BOOL bPlay = TRUE;
@@ -553,14 +557,25 @@ void CYUVPlayerDlg::OnBnClickedButtonPlay()
 
     if (bPlay)
     {
-        //GetDlgItem(IDC_BN_PLAY)->SetWindowText(_T("暂停"));
         m_bPlay.SetBitmap(LoadBitmap(AfxGetInstanceHandle(), MAKEINTRESOURCE(IDB_BM_PAUSE)));
+        m_bStop.EnableWindow(TRUE);
         bPlay = FALSE;
     }
     else
     {
         m_bPlay.SetBitmap(LoadBitmap(AfxGetInstanceHandle(), MAKEINTRESOURCE(IDB_BM_PLAY)));
-        bPlay = TRUE;
+        //m_bStop.EnableWindow(FALSE);
+        
+        if (m_fPause == FALSE){
+         m_bStop.EnableWindow(FALSE);
+            bPlay = TRUE;
+        }
+        if (m_fEnd == TRUE)
+        {
+            m_bStop.EnableWindow(FALSE);
+            bPlay = TRUE;
+            m_nCurrentFrame = 1;
+        }
     }
 
     HANDLE hPlay = NULL;
@@ -571,6 +586,7 @@ void CYUVPlayerDlg::OnBnClickedButtonPlay()
         CString msg;
         //printErrorMessage("Open Mutex failed.", msg);
         MessageBox(msg);
+        return;
     }
 
     if (bPlay)
@@ -584,19 +600,123 @@ void CYUVPlayerDlg::OnBnClickedButtonPlay()
         //MessageBox("Pause...");
     }
 
+    if (m_fPause)
+    {
+        m_bPlay.SetBitmap(LoadBitmap(AfxGetInstanceHandle(), MAKEINTRESOURCE(IDB_BM_PAUSE)));
+        m_fPause = FALSE;
+        ReleaseMutex(hPlay);
+    }
+    if (m_fEnd)
+    {
+        m_bPlay.SetBitmap(LoadBitmap(AfxGetInstanceHandle(), MAKEINTRESOURCE(IDB_BM_PAUSE)));
+        m_fEnd = FALSE;
+        m_nCurrentFrame = 1;
+        ReleaseMutex(hPlay);
+    }
+
     if (m_pWinThread == NULL)
         m_pWinThread = AfxBeginThread(Play, this);
 }
 
+// 播放线程
+UINT Play(LPVOID pParam)
+{
+    CYUVPlayerDlg* pWin = (CYUVPlayerDlg *)pParam;  // 对话框类
+
+    int iTimeSpan = 1000 / pWin->m_nFps;
+
+    HANDLE hPlay = OpenMutex(MUTEX_ALL_ACCESS, FALSE, _T("Play"));
+
+    if (!hPlay)
+    {
+        CString msg;
+        //printErrorMessage("Open Mutex failed.", msg);
+        MessageBox(pWin->m_hWnd, msg, NULL, MB_OK);
+    }
+
+    while (pWin->m_nCurrentFrame <= pWin->m_nTotalFrame)
+    {
+        DWORD t1 = GetTickCount();
+
+        if (WAIT_OBJECT_0 == WaitForSingleObject(hPlay,INFINITE))
+        {
+            ReleaseMutex(hPlay);
+        }
+
+        pWin->Read(pWin->m_nCurrentFrame);
+        pWin->Show();
+
+        DWORD t2 = GetTickCount();
+        int t = t2 - t1;
+        if (t < iTimeSpan)
+            Sleep(iTimeSpan - t);
+
+        pWin->m_nCurrentFrame++;
+    }
+    pWin->m_nCurrentFrame--; // 上述循环结束后，m_nCurrentFrame会多一次
+    pWin->m_bStop.EnableWindow(FALSE);
+    pWin->m_bPlay.SetBitmap(LoadBitmap(AfxGetInstanceHandle(), MAKEINTRESOURCE(IDB_BM_PLAY)));
+
+    pWin->m_fEnd = TRUE;
+
+    pWin->m_pWinThread = NULL;
+    AfxEndThread(0);
+
+    return 0;
+}
 
 void CYUVPlayerDlg::OnBnClickedButtonStop()
 {
+#if 0
+    static BOOL bStop = TRUE;
+
+    if (bStop)
+    {
+        m_bStop.EnableWindow(FALSE);
+        bStop = FALSE;
+    }
+    else
+    {
+        m_bStop.EnableWindow(TRUE);
+        bStop = TRUE;
+    }
+#endif
+    m_fPause = TRUE;
+
+    HANDLE hPlay = NULL;
+    hPlay = OpenMutex(MUTEX_ALL_ACCESS, FALSE, _T("Play"));
+
+    if (!hPlay)
+    {
+        return;
+    }
+
+    WaitForSingleObject(hPlay,INFINITE);
+
+    //bPlay = TRUE;
+    
+
+    m_bPlay.SetBitmap(LoadBitmap(AfxGetInstanceHandle(), MAKEINTRESOURCE(IDB_BM_PLAY)));
+    m_bStop.EnableWindow(FALSE);
     OnBnClickedButtonFirst();
 }
 
 
 void CYUVPlayerDlg::OnBnClickedButtonPrev()
 {
+#if 0
+    HANDLE hPlay = NULL;
+    hPlay = OpenMutex(MUTEX_ALL_ACCESS, FALSE, _T("Play"));
+
+    if (!hPlay)
+    {
+        return;
+    }
+
+    WaitForSingleObject(hPlay,INFINITE);
+
+    m_fPause = TRUE;
+#endif
     m_nCurrentFrame--;
     if (m_nCurrentFrame <= 1)
     {
@@ -729,6 +849,7 @@ void CYUVPlayerDlg::OnDropFiles(HDROP hDropInfo)
 
     // 显示第一帧
     ShowOpenedFrame();
+
 #if 0
     save_yuv_file("rainbow_176x144_yuyv.yuv", 176, 144, FMT_YUYV);
     save_yuv_file("rainbow_176x144_yvyu.yuv", 176, 144, FMT_YVYU);
@@ -880,7 +1001,7 @@ void CYUVPlayerDlg::ShowOpenedFrame()
 
     m_bSaveFrame.EnableWindow(TRUE);
     m_bPlay.EnableWindow(TRUE);
-    //m_bStop.EnableWindow(TRUE);
+    m_bStop.EnableWindow(FALSE);
     m_bPrevFrame.EnableWindow(TRUE);
     m_bNextFrame.EnableWindow(TRUE);
     m_bFirstFrame.EnableWindow(TRUE);
@@ -941,49 +1062,4 @@ void CYUVPlayerDlg::SetParentParameters(int width, int height, int fps, int fmt,
     if (!IsOpen()) return;
 
     ShowOpenedFrame();
-}
-
-// 播放线程
-UINT Play(LPVOID pParam)
-{
-    CYUVPlayerDlg* pWin = (CYUVPlayerDlg *)pParam;  // 对话框类
-
-    int iTimeSpan = 1000 / pWin->m_nFps;
-
-    HANDLE hPlay = OpenMutex(MUTEX_ALL_ACCESS, FALSE, _T("Play"));
-
-    if (!hPlay)
-    {
-        CString msg;
-        //printErrorMessage("Open Mutex failed.", msg);
-        MessageBox(pWin->m_hWnd, msg, NULL, MB_OK);
-    }
-
-    while (pWin->m_nCurrentFrame <= pWin->m_nTotalFrame)
-    {
-        DWORD t1 = GetTickCount();
-
-        if (WAIT_OBJECT_0 == WaitForSingleObject(hPlay,INFINITE))
-        {
-            ReleaseMutex(hPlay);
-        }
-
-        pWin->Read(pWin->m_nCurrentFrame);
-        pWin->Show();
-
-        DWORD t2 = GetTickCount();
-        int t = t2 - t1;
-        if (t < iTimeSpan)
-            Sleep(iTimeSpan - t);
-
-        pWin->m_nCurrentFrame++;
-    }
-    pWin->m_nCurrentFrame--; // 上述循环结束后，m_nCurrentFrame会多一次
-    pWin->m_bStop.EnableWindow(FALSE);
-    pWin->m_bPlay.SetBitmap(LoadBitmap(AfxGetInstanceHandle(), MAKEINTRESOURCE(IDB_BM_PLAY)));
-
-    pWin->m_pWinThread = NULL;
-    AfxEndThread(0);
-
-    return 0;
 }

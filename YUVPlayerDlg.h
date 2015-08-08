@@ -57,6 +57,8 @@ public:
 
     INT m_nTotalFrame;   // 总帧数，由文件大小及YUV大小计算而得
     INT m_nCurrentFrame; // 当前帧，从1开始计算，但seek文件时会自动减1
+    static BOOL m_fPause;
+    static BOOL m_fEnd;
 
     // 共用内部函数
     void Open();

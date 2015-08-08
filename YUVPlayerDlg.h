@@ -72,7 +72,6 @@ public:
     void SetParentParameters(int width, int height, int fps, int fmt, BOOL loop);
 
     void ShowSettingWindow();
-
 // й╣ож
 protected:
 	HICON m_hIcon;

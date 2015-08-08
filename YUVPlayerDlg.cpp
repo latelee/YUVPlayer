@@ -31,6 +31,12 @@ public:
 // 实现
 protected:
 	DECLARE_MESSAGE_MAP()
+public:
+    virtual BOOL OnInitDialog();
+    afx_msg void OnLButtonDown(UINT nFlags, CPoint point);
+    afx_msg void OnMouseMove(UINT nFlags, CPoint point);
+private:
+    RECT m_pRectLink;
 };
 
 CAboutDlg::CAboutDlg() : CDialogEx(CAboutDlg::IDD)
@@ -43,12 +49,52 @@ void CAboutDlg::DoDataExchange(CDataExchange* pDX)
 }
 
 BEGIN_MESSAGE_MAP(CAboutDlg, CDialogEx)
+    ON_WM_LBUTTONDOWN()
+    ON_WM_MOUSEMOVE()
 END_MESSAGE_MAP()
 
 
 // CYUVPlayerDlg 对话框
+BOOL CAboutDlg::OnInitDialog()
+{
+    CDialogEx::OnInitDialog();
+
+    // TODO:  在此添加额外的初始化
+    GetDlgItem(IDC_STATIC_WEB)->GetWindowRect(&m_pRectLink);
+    ScreenToClient(&m_pRectLink);
+    return TRUE;  // return TRUE unless you set the focus to a control
+    // 异常: OCX 属性页应返回 FALSE
+}
 
 
+void CAboutDlg::OnLButtonDown(UINT nFlags, CPoint point)
+{
+    CString strLink;
+
+    if (point.x > m_pRectLink.left && point.x < m_pRectLink.right && point.y < m_pRectLink.bottom && point.y > m_pRectLink.top)
+    {
+        if (nFlags == MK_LBUTTON)
+        {
+            GetDlgItem(IDC_STATIC_WEB)->GetWindowText(strLink);
+            ShellExecute(NULL, NULL, strLink, NULL, NULL, SW_NORMAL);
+        }
+    }
+    CDialogEx::OnLButtonDown(nFlags, point);
+}
+
+
+void CAboutDlg::OnMouseMove(UINT nFlags, CPoint point)
+{
+    if (point.x > m_pRectLink.left && point.x < m_pRectLink.right && point.y < m_pRectLink.bottom && point.y > m_pRectLink.top)
+    {
+        //变成手形
+        HCURSOR hCursor;
+        hCursor = ::LoadCursor (NULL, IDC_HAND);
+        ::SetCursor(hCursor);
+    }
+
+    CDialogEx::OnMouseMove(nFlags, point);
+}
 
 
 CYUVPlayerDlg::CYUVPlayerDlg(CWnd* pParent /*=NULL*/)
@@ -219,8 +265,6 @@ BOOL CYUVPlayerDlg::OnInitDialog()
     m_fInit = TRUE;
     m_fShowBlack = TRUE;
 
-    //GetDlgItem(ID_FILE_SAVEFRAME)->EnableWindow(FALSE);
-    //GetMenu()->GetSubMenu(3)->EnableMenuItem(1,MF_BYPOSITION | MF_ENABLED);
 	return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
 }
 

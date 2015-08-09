@@ -552,7 +552,6 @@ void CYUVPlayerDlg::OnBnClickedButtonPlay()
 {
     static BOOL bPlay = TRUE;
 
-    //UpdateData();
     m_bStop.EnableWindow(TRUE);
 
     if (bPlay)
@@ -564,7 +563,6 @@ void CYUVPlayerDlg::OnBnClickedButtonPlay()
     else
     {
         m_bPlay.SetBitmap(LoadBitmap(AfxGetInstanceHandle(), MAKEINTRESOURCE(IDB_BM_PLAY)));
-        //m_bStop.EnableWindow(FALSE);
         
         if (m_fPause == FALSE){
          m_bStop.EnableWindow(FALSE);
@@ -603,12 +601,14 @@ void CYUVPlayerDlg::OnBnClickedButtonPlay()
     if (m_fPause)
     {
         m_bPlay.SetBitmap(LoadBitmap(AfxGetInstanceHandle(), MAKEINTRESOURCE(IDB_BM_PAUSE)));
+        m_bStop.EnableWindow(TRUE);
         m_fPause = FALSE;
         ReleaseMutex(hPlay);
     }
     if (m_fEnd)
     {
         m_bPlay.SetBitmap(LoadBitmap(AfxGetInstanceHandle(), MAKEINTRESOURCE(IDB_BM_PAUSE)));
+        m_bStop.EnableWindow(TRUE);
         m_fEnd = FALSE;
         m_nCurrentFrame = 1;
         ReleaseMutex(hPlay);
@@ -634,7 +634,7 @@ UINT Play(LPVOID pParam)
         MessageBox(pWin->m_hWnd, msg, NULL, MB_OK);
     }
 
-    while (pWin->m_nCurrentFrame <= pWin->m_nTotalFrame)
+    while (pWin->m_nCurrentFrame < pWin->m_nTotalFrame)
     {
         DWORD t1 = GetTickCount();
 
@@ -642,7 +642,7 @@ UINT Play(LPVOID pParam)
         {
             ReleaseMutex(hPlay);
         }
-
+        pWin->m_nCurrentFrame++;
         pWin->Read(pWin->m_nCurrentFrame);
         pWin->Show();
 
@@ -650,10 +650,7 @@ UINT Play(LPVOID pParam)
         int t = t2 - t1;
         if (t < iTimeSpan)
             Sleep(iTimeSpan - t);
-
-        pWin->m_nCurrentFrame++;
     }
-    pWin->m_nCurrentFrame--; // 上述循环结束后，m_nCurrentFrame会多一次
     pWin->m_bStop.EnableWindow(FALSE);
     pWin->m_bPlay.SetBitmap(LoadBitmap(AfxGetInstanceHandle(), MAKEINTRESOURCE(IDB_BM_PLAY)));
 
@@ -667,20 +664,6 @@ UINT Play(LPVOID pParam)
 
 void CYUVPlayerDlg::OnBnClickedButtonStop()
 {
-#if 0
-    static BOOL bStop = TRUE;
-
-    if (bStop)
-    {
-        m_bStop.EnableWindow(FALSE);
-        bStop = FALSE;
-    }
-    else
-    {
-        m_bStop.EnableWindow(TRUE);
-        bStop = TRUE;
-    }
-#endif
     m_fPause = TRUE;
 
     HANDLE hPlay = NULL;
@@ -692,9 +675,6 @@ void CYUVPlayerDlg::OnBnClickedButtonStop()
     }
 
     WaitForSingleObject(hPlay,INFINITE);
-
-    //bPlay = TRUE;
-    
 
     m_bPlay.SetBitmap(LoadBitmap(AfxGetInstanceHandle(), MAKEINTRESOURCE(IDB_BM_PLAY)));
     m_bStop.EnableWindow(FALSE);
@@ -704,19 +684,6 @@ void CYUVPlayerDlg::OnBnClickedButtonStop()
 
 void CYUVPlayerDlg::OnBnClickedButtonPrev()
 {
-#if 0
-    HANDLE hPlay = NULL;
-    hPlay = OpenMutex(MUTEX_ALL_ACCESS, FALSE, _T("Play"));
-
-    if (!hPlay)
-    {
-        return;
-    }
-
-    WaitForSingleObject(hPlay,INFINITE);
-
-    m_fPause = TRUE;
-#endif
     m_nCurrentFrame--;
     if (m_nCurrentFrame <= 1)
     {

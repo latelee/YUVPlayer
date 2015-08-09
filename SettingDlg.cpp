@@ -293,10 +293,10 @@ BOOL CSettingDlg::OnInitDialog()
     // 
     CString strTemp;
 
-#if 0
+#if 01
     // default
-    //if (!ExistRegistration())
-    if (1)
+    if (!ExistRegistration())
+    //if (1)
     {
         SetRegistration(m_strAddedSize, m_nWidth,m_nHeight, m_nFpsIndex, m_nYuvFormat, m_fLoop);
     }
@@ -365,6 +365,7 @@ void CSettingDlg::OnBnClickedApply()
     m_cbResolution.SetCurSel(nResolutionIdx);
 
     m_pParentWnd->SetParentParameters(m_nWidth, m_nHeight, m_nFps, m_nYuvFormat, m_fLoop);
+    SetRegistration(m_strAddedSize, m_nWidth,m_nHeight, m_nFpsIndex, m_nYuvFormat, m_fLoop);
 
     GetDlgItem(IDC_APPLY)->EnableWindow(FALSE);
 }
@@ -379,6 +380,7 @@ void CSettingDlg::OnBnClickedCancel()
 void CSettingDlg::OnBnClickedOk()
 {
     m_pParentWnd->SetParentParameters(m_nWidth, m_nHeight, m_nFps, m_nYuvFormat, m_fLoop);
+    SetRegistration(m_strAddedSize, m_nWidth,m_nHeight, m_nFpsIndex, m_nYuvFormat, m_fLoop);
     CDialogEx::OnOK();
 }
 
@@ -404,6 +406,7 @@ void CSettingDlg::OnSelchangeCbYuvFmt()
 void CSettingDlg::OnSelchangeCbFps()
 {
     CString strTemp;
+    m_nFpsIndex = m_cbFps.GetCurSel();
     m_cbFps.GetLBText(m_cbFps.GetCurSel(), strTemp);
     swscanf_s(strTemp.GetBuffer(), _T("%d"), &m_nFps);
     GetDlgItem(IDC_APPLY)->EnableWindow(TRUE);

@@ -623,8 +623,6 @@ UINT Play(LPVOID pParam)
 {
     CYUVPlayerDlg* pWin = (CYUVPlayerDlg *)pParam;  // ¶Ô»°¿òÀà
 
-    int iTimeSpan = 1000 / pWin->m_nFps;
-
     HANDLE hPlay = OpenMutex(MUTEX_ALL_ACCESS, FALSE, _T("Play"));
 
     if (!hPlay)
@@ -634,23 +632,28 @@ UINT Play(LPVOID pParam)
         MessageBox(pWin->m_hWnd, msg, NULL, MB_OK);
     }
 
-    while (pWin->m_nCurrentFrame < pWin->m_nTotalFrame)
-    {
-        DWORD t1 = GetTickCount();
-
-        if (WAIT_OBJECT_0 == WaitForSingleObject(hPlay,INFINITE))
+    do {
+        while (pWin->m_nCurrentFrame < pWin->m_nTotalFrame)
         {
-            ReleaseMutex(hPlay);
-        }
-        pWin->m_nCurrentFrame++;
-        pWin->Read(pWin->m_nCurrentFrame);
-        pWin->Show();
+            int iTimeSpan = 1000 / pWin->m_nFps;
+            DWORD t1 = GetTickCount();
 
-        DWORD t2 = GetTickCount();
-        int t = t2 - t1;
-        if (t < iTimeSpan)
-            Sleep(iTimeSpan - t);
-    }
+            if (WAIT_OBJECT_0 == WaitForSingleObject(hPlay,INFINITE))
+            {
+                ReleaseMutex(hPlay);
+            }
+            pWin->m_nCurrentFrame++;
+            pWin->Read(pWin->m_nCurrentFrame);
+            pWin->Show();
+
+            DWORD t2 = GetTickCount();
+            int t = t2 - t1;
+            if (t < iTimeSpan)
+                Sleep(iTimeSpan - t);
+        }
+        if (pWin->m_fLoop)
+            pWin->m_nCurrentFrame = 1;
+    } while (pWin->m_fLoop);
     pWin->m_bStop.EnableWindow(FALSE);
     pWin->m_bPlay.SetBitmap(LoadBitmap(AfxGetInstanceHandle(), MAKEINTRESOURCE(IDB_BM_PLAY)));
 

@@ -110,15 +110,16 @@ void find_resolution(char* filename, int& fmt_idx, int& width, int& height)
     if (fmt_idx == 13) fmt_idx = 9;
     if (fmt_idx == 14) fmt_idx = 11;
     // 这里打印的是最大匹配的
-    if (fmt_idx != -1)
+    if (fmt_idx >= 0)
         str_debug("fmt[%d]: %s(=%s)\n", fmt_idx, c_fmt, fmt_str[fmt_idx]);
 
-    if (idx != -1 && fmt_idx == -1) fmt_idx = idx;
-    if (fmt_idx != -1)
+    if (idx != -1 && fmt_idx <= 0) fmt_idx = idx;
+    if (fmt_idx >= 0)
         str_debug("---final fmt[%d]: %s(=%s)---\n", fmt_idx, c_fmt, fmt_str[fmt_idx]);
 
     fmt_idx+=1;
 
+    idx = -1;
     // 查找分辨率字符串
     for (i = 0; i < ARRAY_ELEMS(res_str); i++)
     {
@@ -271,16 +272,18 @@ void CSettingDlg::GetRegistration(CString& strSize, int& width, int& height, int
     HKEY hKey;
     DWORD dwType = 0;
     DWORD dwLen = 1024; // 此处值是否适合？CString类型如何给定长度？
-    //BYTE szBuffer[1024] = {0};
+    BYTE szBuffer[1024] = {0};
 
     RegOpenKeyEx(HKEY_CURRENT_USER,  _T("Software\\YUVPlayer-latelee.org\\Setting"), 0, KEY_QUERY_VALUE, &hKey);
-    RegQueryValueEx(hKey, _T("AddedSize"), NULL, &dwType, (BYTE*)(strSize.GetBuffer()), &dwLen);
+    //RegQueryValueEx(hKey, _T("AddedSize"), NULL, &dwType, (BYTE*)(strSize.GetBuffer()), &dwLen);
+    RegQueryValueEx(hKey, _T("AddedSize"), NULL, &dwType, szBuffer, &dwLen);
     RegQueryValueEx(hKey, _T("FrameWidth"), NULL, &dwType, (BYTE*)&width, &dwLen);
     RegQueryValueEx(hKey, _T("FrameHeight"), NULL, &dwType, (BYTE*)&height, &dwLen);
     RegQueryValueEx(hKey, _T("FrameRate"), NULL, &dwType, (BYTE*)&fpsidx, &dwLen);
     RegQueryValueEx(hKey, _T("CurrentPixelFormat"), NULL, &dwType, (BYTE*)&fmt, &dwLen);
     RegQueryValueEx(hKey, _T("Loop"), NULL, &dwType, (BYTE*)&loop, &dwLen);
 
+    strSize.Format(_T("%s"), szBuffer);
     RegCloseKey(hKey);
 }
 // CSettingDlg 消息处理程序
@@ -293,7 +296,7 @@ BOOL CSettingDlg::OnInitDialog()
     // 
     CString strTemp;
 
-#if 01
+#if 0
     // default
     if (!ExistRegistration())
     //if (1)
@@ -435,9 +438,13 @@ void CSettingDlg::OnChangeEHeight()
 }
 
 // 向注册表添加一种分辨率
+// todo 在后面加，似乎不太好
 void CSettingDlg::OnBnClickedBtAdd()
 {
-
+    CString strTemp;
+    UpdateData();
+    strTemp.Format(_T(";%dx%d"), m_nWidth, m_nHeight);
+    m_strAddedSize+=strTemp;
 }
 
 // 在注册表删除一种分辨率

@@ -167,7 +167,9 @@ void yuv420p_to_rgb24(YUV_TYPE type, unsigned char* yuvbuffer,unsigned char* rgb
 void yuv420sp_to_rgb24(YUV_TYPE type, unsigned char* yuvbuffer,unsigned char* rgbbuffer, int width,int height) ;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
+void yuv422p_to_yuv422sp(unsigned char* yuv422p, unsigned char* yuv422sp, int width, int height);
 void yuv422sp_to_yuv422p(unsigned char* yuv422sp, unsigned char* yuv422p, int width, int height);
+
 
 void yuv420sp_to_rgb24(YUV_TYPE type, unsigned char* yuv420sp, unsigned char* yuv420p, int width, int height);
 

@@ -18,14 +18,17 @@ public:
 protected:
 	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV support
 private:
-    int m_nYuvFormat;
+    int     m_nYuvFormat;
     char*   m_pbYuvData;    // YUV数据
     char*   m_pbOutputData;    // RGB数据
     UINT    m_iYuvSize; // 一幅图像大小
     UINT    m_iOutputSize; // BMP图的大小
     INT     m_nTotalFrame;
     INT     m_nCurrentFrame;
-    CFile m_cFile;
+
+    CFile   m_cFile;
+    CFile   m_cOutputFile;
+    CString m_strOutputFile;
 
 public:
     void ParseFilename(const char* pFilename);

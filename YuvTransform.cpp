@@ -23,7 +23,8 @@ CYuvTransform::CYuvTransform(CWnd* pParent /*=NULL*/)
     , m_nWidth(0)
     , m_nHeight(0)
 {
-
+    m_pbYuvData = NULL;
+    m_pbOutputData = NULL;
 }
 
 CYuvTransform::~CYuvTransform()
@@ -85,12 +86,21 @@ void CYuvTransform::OnBnClickedBTransform()
 {
     UpdateData();
     
-    CString strTemp;
     int nOutput = -1;
     nOutput = m_cbOutput.GetCurSel();
-    strTemp.Format(_T("%d"), nOutput);
-    MessageBox(strTemp);
 
+    Open();
+    Malloc();
+
+    if (m_nYuvFormat == FMT_YUV422 && nOutput == FMT_NV16)
+    {
+        yuv422p_to_yuv422sp((unsigned char*)m_pbYuvData, (unsigned char*)m_pbOutputData, m_nWidth, m_nHeight);
+
+    }
+    m_strOutputFile = _T("aaa_nv16.yuv");
+    m_cOutputFile.Open(m_strOutputFile.GetBuffer(), CFile::modeWrite|CFile::modeCreate);
+    m_cOutputFile.Write(m_pbOutputData, m_iOutputSize);
+    m_cOutputFile.Close();
 }
 
 
@@ -193,7 +203,7 @@ void CYuvTransform::Malloc()
         break;
     }
 
-    m_iOutputSize = m_nWidth * m_nHeight * 3 + 54;
+    m_iOutputSize = m_iYuvSize;
 
     if (m_pbYuvData != NULL)
     {

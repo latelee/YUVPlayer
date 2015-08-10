@@ -116,6 +116,7 @@
     <ClInclude Include="yuv2rgb.h" />
     <ClInclude Include="YUVPlayer.h" />
     <ClInclude Include="YUVPlayerDlg.h" />
+    <ClInclude Include="YuvTransform.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="SettingDlg.cpp" />
@@ -126,6 +127,7 @@
     <ClCompile Include="yuv2rgb.cpp" />
     <ClCompile Include="YUVPlayer.cpp" />
     <ClCompile Include="YUVPlayerDlg.cpp" />
+    <ClCompile Include="YuvTransform.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="YUVPlayer.rc" />

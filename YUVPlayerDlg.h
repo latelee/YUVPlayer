@@ -11,12 +11,13 @@
 
 
 #define MAX_URL_LENGTH 256
+/*
 typedef struct yuv_pic_tag
 {
     char* yuv_data[4];
     int   yuv_linesize[4]; //number of bytes per line
 } yuv_pic;
-
+*/
 // CYUVPlayerDlg ¶Ô»°¿ò
 class CYUVPlayerDlg : public CDialogEx
 {
@@ -121,4 +122,5 @@ public:
     CButton m_bSetting;
     CButton m_bStop;
     afx_msg void OnDropFiles(HDROP hDropInfo);
+    afx_msg void OnHelpTransform();
 };

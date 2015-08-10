@@ -1,5 +1,7 @@
 #pragma once
 
+extern void find_resolution(char* filename, int& fmt_idx, int& width, int& height);
+
 class CYUVPlayerDlg;
 
 // CSettingDlg ¶Ô»°¿ò

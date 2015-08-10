@@ -5,6 +5,7 @@
 #include "stdafx.h"
 #include "YUVPlayer.h"
 #include "YUVPlayerDlg.h"
+#include "YuvTransform.h"
 #include "afxdialogex.h"
 
 #include "yuv2rgb.h"
@@ -174,6 +175,7 @@ BEGIN_MESSAGE_MAP(CYUVPlayerDlg, CDialogEx)
     ON_WM_SIZE()
     ON_WM_SIZING()
     ON_WM_DROPFILES()
+    ON_COMMAND(ID_HELP_TRANSFORM, &CYUVPlayerDlg::OnHelpTransform)
 END_MESSAGE_MAP()
 
 // CYUVPlayerDlg 消息处理程序
@@ -434,6 +436,11 @@ void CYUVPlayerDlg::OnHelpHelp()
     MessageBox((LPCTSTR)help);
 }
 
+void CYUVPlayerDlg::OnHelpTransform()
+{
+    CYuvTransform dlg;
+    dlg.DoModal();
+}
 
 void CYUVPlayerDlg::OnHelpAbout()
 {

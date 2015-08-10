@@ -86,17 +86,13 @@ void CYuvTransform::OnBnClickedBTransform()
 {
     UpdateData();
     
-    int nOutput = -1;
-    nOutput = m_cbOutput.GetCurSel();
+
 
     Open();
     Malloc();
 
-    if (m_nYuvFormat == FMT_YUV422 && nOutput == FMT_NV16)
-    {
-        yuv422p_to_yuv422sp((unsigned char*)m_pbYuvData, (unsigned char*)m_pbOutputData, m_nWidth, m_nHeight);
-
-    }
+    Read(1);
+    Transform();
     m_strOutputFile = _T("aaa_nv16.yuv");
     m_cOutputFile.Open(m_strOutputFile.GetBuffer(), CFile::modeWrite|CFile::modeCreate);
     m_cOutputFile.Write(m_pbOutputData, m_iOutputSize);
@@ -228,4 +224,20 @@ void CYuvTransform::Read(INT nCurrentFrame)
 {
     m_cFile.Seek(m_iYuvSize * (nCurrentFrame - 1), SEEK_SET);
     m_cFile.Read(m_pbYuvData, m_iYuvSize);
+}
+
+void CYuvTransform::Transform()
+{
+    int nOutput = -1;
+    nOutput = m_cbOutput.GetCurSel();
+
+    if (m_nYuvFormat == FMT_YUV422 && nOutput == FMT_NV16)
+    {
+        yuv422p_to_yuv422sp((unsigned char*)m_pbYuvData, (unsigned char*)m_pbOutputData, m_nWidth, m_nHeight);
+
+    }
+    else
+    {
+        MessageBox(_T("Sorry, can not do it."));
+    }
 }

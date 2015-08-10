@@ -36,6 +36,7 @@ public:
     BOOL IsOpen();
     void Malloc();
     void Read(INT nCurrentFrame);
+    void Transform();
 
 	DECLARE_MESSAGE_MAP()
 public:

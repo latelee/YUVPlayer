@@ -5,6 +5,7 @@
 #pragma once
 
 #include "SettingDlg.h"
+#include "afxcmn.h"
 
 #define APP_NAM _T("YUV Player")
 
@@ -123,4 +124,6 @@ public:
     CButton m_bStop;
     afx_msg void OnDropFiles(HDROP hDropInfo);
     afx_msg void OnHelpTransform();
+    CSliderCtrl m_slProgress;
+    afx_msg void OnHScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar);
 };

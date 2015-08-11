@@ -143,6 +143,7 @@ void CYUVPlayerDlg::DoDataExchange(CDataExchange* pDX)
     DDX_Control(pDX, IDC_BUTTON_SAVE, m_bSaveFrame);
     DDX_Control(pDX, IDC_BUTTON_SET, m_bSetting);
     DDX_Control(pDX, IDC_BUTTON_STOP, m_bStop);
+    DDX_Control(pDX, IDC_SLIDER1, m_slProgress);
 }
 
 BEGIN_MESSAGE_MAP(CYUVPlayerDlg, CDialogEx)
@@ -176,6 +177,7 @@ BEGIN_MESSAGE_MAP(CYUVPlayerDlg, CDialogEx)
     ON_WM_SIZING()
     ON_WM_DROPFILES()
     ON_COMMAND(ID_HELP_TRANSFORM, &CYUVPlayerDlg::OnHelpTransform)
+    ON_WM_HSCROLL()
 END_MESSAGE_MAP()
 
 // CYUVPlayerDlg 消息处理程序
@@ -259,6 +261,8 @@ BOOL CYUVPlayerDlg::OnInitDialog()
     m_bLastFrame.SetBitmap(LoadBitmap(AfxGetInstanceHandle(), MAKEINTRESOURCE(IDB_BM_LAST)));
     m_bLastFrame.EnableWindow(FALSE);
     m_bSetting.SetBitmap(LoadBitmap(AfxGetInstanceHandle(), MAKEINTRESOURCE(IDB_BM_SETTING)));
+
+    m_slProgress.EnableWindow(FALSE);
 
     // 创建互斥量
     HANDLE hPlay = NULL;
@@ -571,8 +575,9 @@ void CYUVPlayerDlg::OnBnClickedButtonPlay()
     {
         m_bPlay.SetBitmap(LoadBitmap(AfxGetInstanceHandle(), MAKEINTRESOURCE(IDB_BM_PLAY)));
         
-        if (m_fPause == FALSE){
-         m_bStop.EnableWindow(FALSE);
+        if (m_fPause == FALSE)
+        {
+            m_bStop.EnableWindow(FALSE);
             bPlay = TRUE;
         }
         if (m_fEnd == TRUE)
@@ -915,6 +920,9 @@ void CYUVPlayerDlg::Malloc()
     m_pbRgbData  = new char[m_iRgbSize];
 
     m_nTotalFrame = (UINT)(m_cFile.GetLength() / m_iYuvSize);
+    m_slProgress.SetRange(1, m_nTotalFrame);
+    m_slProgress.SetPos(m_nCurrentFrame);
+
     this->ShowFrameCount(m_nCurrentFrame);
 }
 
@@ -963,6 +971,7 @@ void CYUVPlayerDlg::ShowFrameCount(int nCurrentFrame)
     CString strTemp;
     strTemp.Format(_T("%d/%d"), nCurrentFrame, m_nTotalFrame);
     GetDlgItem(IDC_STATIC_FRAMECNT)->SetWindowText(strTemp);
+    m_slProgress.SetPos(nCurrentFrame);
 }
 
 // 打开文件 时显示第一帧
@@ -983,6 +992,10 @@ void CYUVPlayerDlg::ShowOpenedFrame()
     m_bNextFrame.EnableWindow(TRUE);
     m_bFirstFrame.EnableWindow(TRUE);
     m_bLastFrame.EnableWindow(TRUE);
+
+    m_slProgress.EnableWindow(TRUE);
+    //m_slProgress.SetLineSize(1);
+    //m_slProgress.SetPageSize(1);
 }
 
 inline void RenderBitmap(CWnd *pWnd, Bitmap* pbmp)
@@ -1039,4 +1052,16 @@ void CYUVPlayerDlg::SetParentParameters(int width, int height, int fps, int fmt,
     if (!IsOpen()) return;
 
     ShowOpenedFrame();
+}
+
+
+void CYUVPlayerDlg::OnHScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar)
+{
+    //CSliderCtrl  *pSlidCtrl=(CSliderCtrl*)GetDlgItem(IDC_SLIDER1);
+    m_nCurrentFrame = m_slProgress.GetPos();
+    this->Read(m_nCurrentFrame);
+    this->Show();
+    //this->ShowFrameCount(m_nCurrentFrame);
+
+    CDialogEx::OnHScroll(nSBCode, nPos, pScrollBar);
 }

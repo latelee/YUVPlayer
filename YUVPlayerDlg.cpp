@@ -129,6 +129,18 @@ CYUVPlayerDlg::~CYUVPlayerDlg()
         delete m_pSettingDlg;
         m_pSettingDlg = NULL;
     }
+
+    if (m_pbYuvData != NULL)
+    {
+        delete[] m_pbYuvData;
+        m_pbYuvData = NULL;
+    }
+
+    if (m_pbRgbData != NULL)
+    {
+        delete[] m_pbRgbData;
+        m_pbRgbData = NULL;
+    }
 }
 
 void CYUVPlayerDlg::DoDataExchange(CDataExchange* pDX)
@@ -850,15 +862,13 @@ void CYUVPlayerDlg::OnDropFiles(HDROP hDropInfo)
 void CYUVPlayerDlg::Open()
 {
     // 打开文件
-    // 暂时只支持一个文件，如果已经打开，就关闭
-    // TODO：此处应该能优化
     if (CFile::hFileNull != m_cFile.m_hFile)
     {
         m_cFile.Close();
     }
     if (!m_cFile.Open(m_strPathName.GetBuffer(), CFile::modeRead))
     {
-        MessageBox(_T("打开YUV文件失败!"));
+        MessageBox(_T("Open YUV file failed."));
         return;
     }
 }

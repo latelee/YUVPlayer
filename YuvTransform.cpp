@@ -25,10 +25,24 @@ CYuvTransform::CYuvTransform(CWnd* pParent /*=NULL*/)
 {
     m_pbYuvData = NULL;
     m_pbOutputData = NULL;
+    m_nYuvFormat = -1;
+    m_nCurrentFrame = 0;
+    m_nTotalFrame = 0;
 }
 
 CYuvTransform::~CYuvTransform()
 {
+    if (m_pbYuvData != NULL)
+    {
+        delete[] m_pbYuvData;
+        m_pbYuvData = NULL;
+    }
+
+    if (m_pbOutputData != NULL)
+    {
+        delete[] m_pbOutputData;
+        m_pbOutputData = NULL;
+    }
 }
 
 void CYuvTransform::DoDataExchange(CDataExchange* pDX)
@@ -48,6 +62,7 @@ BEGIN_MESSAGE_MAP(CYuvTransform, CDialogEx)
     ON_BN_CLICKED(IDC_B_SPLIT, &CYuvTransform::OnBnClickedBSplit)
     ON_BN_CLICKED(IDC_B_TRANSFORM, &CYuvTransform::OnBnClickedBTransform)
     ON_WM_DROPFILES()
+    ON_BN_CLICKED(IDOK, &CYuvTransform::OnBnClickedOk)
 END_MESSAGE_MAP()
 
 
@@ -60,6 +75,9 @@ void CYuvTransform::OnBnClickedBOpen()
         return;
 
     m_strPathName = fileDlg.GetPathName();
+    m_strFileTittle = fileDlg.GetFileTitle();
+    m_strFileExtern = fileDlg.GetFileExt();
+
     // 找文件名
     wchar_t* tmp = wcsrchr(m_strPathName.GetBuffer(), '\\');
     char szFilename[256] = {0};
@@ -81,22 +99,26 @@ void CYuvTransform::OnBnClickedBSplit()
     // TODO: Add your control notification handler code here
 }
 
-
 void CYuvTransform::OnBnClickedBTransform()
 {
     UpdateData();
-    
 
+    if (m_strPathName.IsEmpty() || m_nWidth == 0 || m_nHeight == 0)
+    {
+        MessageBox(_T("Sorry, can not do it.Maybe you forgot sth."));
+        return;
+    }
+    CreateDirectory(_T("./out"), NULL);
 
-    Open();
-    Malloc();
+    if (Open() < 0) return;
+
+    if (Malloc() < 0) return;
 
     Read(1);
-    Transform();
-    m_strOutputFile = _T("aaa_nv16.yuv");
-    m_cOutputFile.Open(m_strOutputFile.GetBuffer(), CFile::modeWrite|CFile::modeCreate);
-    m_cOutputFile.Write(m_pbOutputData, m_iOutputSize);
-    m_cOutputFile.Close();
+
+    if (Transform() < 0) return;
+    
+    Write(-1);
 }
 
 
@@ -111,11 +133,19 @@ void CYuvTransform::OnDropFiles(HDROP hDropInfo)
 
     // 找文件名
     wchar_t* tmp = wcsrchr(pFilePathName, '\\');
+    
     char szFilename[256] = {0};
     WideCharToMultiByte(CP_ACP, 0, tmp+1, wcslen(tmp+1), szFilename, 256, NULL, NULL);
     free(pFilePathName);
 
     ParseFilename(szFilename);
+
+    wchar_t szExt[16] = {0};
+    wchar_t szFilename1[256] = {0};
+    _wsplitpath(m_strPathName, NULL, NULL, szFilename1, szExt); // 要单独开辟空间存储，否则窗口关闭后有非法内存使用
+
+    m_strFileTittle = szFilename1;
+    m_strFileExtern.Format(_T("%s"), &szExt[1]);
 
     UpdateData(FALSE);
 }
@@ -144,20 +174,19 @@ void CYuvTransform::ParseFilename(const char* pFilename)
 }
 
 // 内部实现
-void CYuvTransform::Open()
+INT CYuvTransform::Open()
 {
-    // 打开文件
-    // 暂时只支持一个文件，如果已经打开，就关闭
-    // TODO：此处应该能优化
     if (CFile::hFileNull != m_cFile.m_hFile)
     {
         m_cFile.Close();
     }
     if (!m_cFile.Open(m_strPathName.GetBuffer(), CFile::modeRead))
     {
-        MessageBox(_T("打开YUV文件失败!"));
-        return;
+        MessageBox(_T("Open YUV file failed."));
+        return - 1;
     }
+
+    return 0;
 }
 
 BOOL CYuvTransform::IsOpen()
@@ -168,7 +197,7 @@ BOOL CYuvTransform::IsOpen()
         return FALSE;
 }
 
-void CYuvTransform::Malloc()
+INT CYuvTransform::Malloc()
 {
     // 根据YUV格式分配内存
     switch (m_nYuvFormat)
@@ -196,6 +225,7 @@ void CYuvTransform::Malloc()
         m_iYuvSize = m_nWidth * m_nHeight;
         break;
     default:
+        return -1;
         break;
     }
 
@@ -218,6 +248,7 @@ void CYuvTransform::Malloc()
 
     m_nTotalFrame = (UINT)(m_cFile.GetLength() / m_iYuvSize);
 
+    return 0;
 }
 
 void CYuvTransform::Read(INT nCurrentFrame)
@@ -226,7 +257,28 @@ void CYuvTransform::Read(INT nCurrentFrame)
     m_cFile.Read(m_pbYuvData, m_iYuvSize);
 }
 
-void CYuvTransform::Transform()
+INT CYuvTransform::Write(INT nCurrentFrame)
+{
+    wchar_t extp[32] = {0};
+
+    m_cbOutput.GetWindowText((LPTSTR)extp, 32);
+
+    CString strTemp = extp;
+    strTemp.MakeLower();
+
+    if (nCurrentFrame > 0)
+        m_strOutputFile.Format(_T("./out/%s_%s_%d.%s"), m_strFileTittle, strTemp.GetBuffer(), nCurrentFrame, m_strFileExtern);
+    else
+        m_strOutputFile.Format(_T("./out/%s_%s.%s"), m_strFileTittle, strTemp.GetBuffer(), m_strFileExtern);
+
+    m_cOutputFile.Open(m_strOutputFile.GetBuffer(), CFile::modeWrite|CFile::modeCreate);
+    m_cOutputFile.Write(m_pbOutputData, m_iOutputSize);
+    m_cOutputFile.Close();
+
+    return 0;
+}
+
+INT CYuvTransform::Transform()
 {
     int nOutput = -1;
     nOutput = m_cbOutput.GetCurSel();
@@ -239,5 +291,30 @@ void CYuvTransform::Transform()
     else
     {
         MessageBox(_T("Sorry, can not do it."));
+        return -1;
     }
+
+    return 0;
+}
+
+void CYuvTransform::OnBnClickedOk()
+{
+    // TODO: Add your control notification handler code here
+    if (CFile::hFileNull != m_cFile.m_hFile)
+    {
+        m_cFile.Close();
+    }
+    if (m_pbYuvData != NULL)
+    {
+        delete[] m_pbYuvData;
+        m_pbYuvData = NULL;
+    }
+
+    if (m_pbOutputData != NULL)
+    {
+        delete[] m_pbOutputData;
+        m_pbOutputData = NULL;
+    }
+
+    CDialogEx::OnOK();
 }

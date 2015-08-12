@@ -28,15 +28,20 @@ private:
 
     CFile   m_cFile;
     CFile   m_cOutputFile;
+
     CString m_strOutputFile;
+    CString m_strFileTittle;
+    CString m_strFileExtern;
 
 public:
     void ParseFilename(const char* pFilename);
-    void Open();
+    INT Open();
     BOOL IsOpen();
-    void Malloc();
+    INT Malloc();
     void Read(INT nCurrentFrame);
-    void Transform();
+    INT Transform();
+    INT Write(INT nCurrentFrame = -1);
+    
 
 	DECLARE_MESSAGE_MAP()
 public:
@@ -50,4 +55,5 @@ public:
     UINT m_nHeight;
     CComboBox m_cbInput;
     CComboBox m_cbOutput;
+    afx_msg void OnBnClickedOk();
 };

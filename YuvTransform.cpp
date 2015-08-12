@@ -104,6 +104,8 @@ void CYuvTransform::OnBnClickedBTransform()
 {
     UpdateData();
 
+    m_nYuvFormat = m_cbInput.GetCurSel();
+
     if (m_strPathName.IsEmpty() || m_nWidth == 0 || m_nHeight == 0)
     {
         MessageBox(_T("Sorry, can not do it.Maybe you forgot sth."));
@@ -115,12 +117,30 @@ void CYuvTransform::OnBnClickedBTransform()
 
     if (Malloc() < 0) return;
 
-    // 处理多帧数据
-    Read(1);
 
-    if (Transform() < 0) return;
-    
-    Write(-1);
+    wchar_t extp[32] = {0};
+    m_cbOutput.GetWindowText((LPTSTR)extp, 32);
+    CString strTemp = extp;
+    strTemp.MakeLower();
+    m_strOutputFile.Format(_T("./out/%s_%s.%s"), m_strFileTittle, strTemp.GetBuffer(), m_strFileExtern);
+    m_cOutputFile.Open(m_strOutputFile.GetBuffer(), CFile::modeWrite|CFile::modeCreate);
+    while (m_nCurrentFrame < m_nTotalFrame)
+    {
+        Read(m_nCurrentFrame);
+
+        if (Transform() < 0)
+        {
+            m_cOutputFile.Close();
+            DeleteFile(m_strOutputFile.GetBuffer());
+            return;
+        }
+
+        m_cOutputFile.Write(m_pbOutputData, m_iOutputSize);
+
+        m_nCurrentFrame++;
+    }
+
+    m_cOutputFile.Close();
 }
 
 
@@ -248,6 +268,7 @@ INT CYuvTransform::Malloc()
     m_pbYuvData = new char[m_iYuvSize];
     m_pbOutputData  = new char[m_iOutputSize];
 
+    m_nCurrentFrame = 0;
     m_nTotalFrame = (UINT)(m_cFile.GetLength() / m_iYuvSize);
 
     return 0;
@@ -255,11 +276,11 @@ INT CYuvTransform::Malloc()
 
 void CYuvTransform::Read(INT nCurrentFrame)
 {
-    m_cFile.Seek(m_iYuvSize * (nCurrentFrame - 1), SEEK_SET);
+    m_cFile.Seek(m_iYuvSize * (nCurrentFrame), SEEK_SET);
     m_cFile.Read(m_pbYuvData, m_iYuvSize);
 }
 
-INT CYuvTransform::Write(INT nCurrentFrame)
+INT CYuvTransform::Write(INT nAppend)
 {
     wchar_t extp[32] = {0};
 
@@ -268,12 +289,12 @@ INT CYuvTransform::Write(INT nCurrentFrame)
     CString strTemp = extp;
     strTemp.MakeLower();
 
-    if (nCurrentFrame > 0)
-        m_strOutputFile.Format(_T("./out/%s_%s_%d.%s"), m_strFileTittle, strTemp.GetBuffer(), nCurrentFrame, m_strFileExtern);
-    else
+    if (nAppend > 0)
         m_strOutputFile.Format(_T("./out/%s_%s.%s"), m_strFileTittle, strTemp.GetBuffer(), m_strFileExtern);
+    else
+        m_strOutputFile.Format(_T("./out/%s_%s_%d.%s"), m_strFileTittle, strTemp.GetBuffer(), m_nCurrentFrame, m_strFileExtern);
 
-    m_cOutputFile.Open(m_strOutputFile.GetBuffer(), CFile::modeWrite|CFile::modeCreate);
+    m_cOutputFile.Open(m_strOutputFile.GetBuffer(), CFile::modeWrite|CFile::modeCreate | CFile::modeNoTruncate);
     m_cOutputFile.Write(m_pbOutputData, m_iOutputSize);
     m_cOutputFile.Close();
 
@@ -282,12 +303,37 @@ INT CYuvTransform::Write(INT nCurrentFrame)
 
 INT CYuvTransform::Transform()
 {
-    int nOutput = -1;
-    nOutput = m_cbOutput.GetCurSel();
+    UpdateData();
 
-    if (m_nYuvFormat == FMT_YUV422 && nOutput == FMT_NV16)
+    int nOutput = m_cbOutput.GetCurSel();
+
+    if (m_nYuvFormat == FMT_YUV422 && (nOutput == FMT_NV16 || nOutput == FMT_NV61))
     {
-        yuv422p_to_yuv422sp((unsigned char*)m_pbYuvData, (unsigned char*)m_pbOutputData, m_nWidth, m_nHeight);
+        yuv422p_to_yuv422sp((YUV_TYPE)nOutput, (unsigned char*)m_pbYuvData, (unsigned char*)m_pbOutputData, m_nWidth, m_nHeight);
+    }
+    else if ((m_nYuvFormat == FMT_NV16 || m_nYuvFormat == FMT_NV61) &&nOutput == FMT_YUV422)
+    {
+        yuv422sp_to_yuv422p((YUV_TYPE)m_nYuvFormat, (unsigned char*)m_pbYuvData, (unsigned char*)m_pbOutputData, m_nWidth, m_nHeight);
+
+    }
+    else if (m_nYuvFormat == FMT_YUV420 && (nOutput == FMT_NV12 || nOutput == FMT_NV21))
+    {
+        yuv420p_to_yuv420sp((YUV_TYPE)nOutput, (unsigned char*)m_pbYuvData, (unsigned char*)m_pbOutputData, m_nWidth, m_nHeight);
+
+    }
+    else if ((m_nYuvFormat == FMT_NV12 || m_nYuvFormat == FMT_NV21) && nOutput == FMT_YUV420)
+    {
+        yuv420sp_to_yuv420p((YUV_TYPE)m_nYuvFormat, (unsigned char*)m_pbYuvData, (unsigned char*)m_pbOutputData, m_nWidth, m_nHeight);
+
+    }
+    else if (m_nYuvFormat == FMT_YUV422 && nOutput == FMT_YV16)
+    {
+        yu_to_yv((YUV_TYPE)m_nYuvFormat, (unsigned char*)m_pbYuvData, (unsigned char*)m_pbOutputData, m_nWidth, m_nHeight);
+
+    }
+    else if (m_nYuvFormat == FMT_YUV420 && nOutput == FMT_YV12)
+    {
+        yu_to_yv((YUV_TYPE)m_nYuvFormat, (unsigned char*)m_pbYuvData, (unsigned char*)m_pbOutputData, m_nWidth, m_nHeight);
 
     }
     else

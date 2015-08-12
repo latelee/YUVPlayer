@@ -706,7 +706,7 @@ yyyy yyyy
 uu
 vv
 */
-void yuv422sp_to_yuv422p(unsigned char* yuv422sp, unsigned char* yuv422p, int width, int height)
+void yuv422sp_to_yuv422p(YUV_TYPE type, unsigned char* yuv422sp, unsigned char* yuv422p, int width, int height)
 {
     int i, j;
     int y_size;
@@ -731,8 +731,16 @@ void yuv422sp_to_yuv422p(unsigned char* yuv422sp, unsigned char* yuv422p, int wi
 
     for (j = 0, i = 0; j < uv_size; j+=2, i++)
     {
-        p_u[i] = p_uv[j];
-        p_v[i] = p_uv[j+1];
+        if (type == FMT_NV16)
+        {
+            p_u[i] = p_uv[j];
+            p_v[i] = p_uv[j+1];
+        }
+        else if (type == FMT_NV61)
+        {
+            p_v[i] = p_uv[j];
+            p_u[i] = p_uv[j+1];
+        }
     }
 }
 
@@ -744,7 +752,7 @@ vv
 yyyy yyyy
 uv    uv
 */
-void yuv422p_to_yuv422sp(unsigned char* yuv422p, unsigned char* yuv422sp, int width, int height)
+void yuv422p_to_yuv422sp(YUV_TYPE type, unsigned char* yuv422p, unsigned char* yuv422sp, int width, int height)
 {
     int i, j;
     int y_size;
@@ -771,13 +779,16 @@ void yuv422p_to_yuv422sp(unsigned char* yuv422p, unsigned char* yuv422sp, int wi
     for (j = 0, i = 0; j < uv_size; j+=2, i++)
     {
 	// 此处可调整U、V的位置，变成NV16或NV61
-#if 01
-        p_uv[j] = p_u[i];
-        p_uv[j+1] = p_v[i];
-#else
-        p_uv[j] = p_v[i];
-        p_uv[j+1] = p_u[i];
-#endif
+        if (type == FMT_NV16)
+        {
+            p_uv[j] = p_u[i];
+            p_uv[j+1] = p_v[i];
+        }
+        else if (type == FMT_NV61)
+        {
+            p_uv[j] = p_v[i];
+            p_uv[j+1] = p_u[i];
+        }
     }
 }
 
@@ -789,7 +800,7 @@ yyyy yyyy
 uu
 vv
 */
-void yuv420sp_to_yuv420p(unsigned char* yuv420sp, unsigned char* yuv420p, int width, int height)
+void yuv420sp_to_yuv420p(YUV_TYPE type, unsigned char* yuv420sp, unsigned char* yuv420p, int width, int height)
 {
     int i, j;
     int y_size = width * height;
@@ -807,8 +818,17 @@ void yuv420sp_to_yuv420p(unsigned char* yuv420sp, unsigned char* yuv420p, int wi
     // u
     for (j = 0, i = 0; j < y_size/2; j+=2, i++)
     {
-        u_tmp[i] = uv[j];
-        v_tmp[i] = uv[j+1];
+        if (type == FMT_NV12)
+        {
+            u_tmp[i] = uv[j];
+            v_tmp[i] = uv[j+1];
+        }
+        else if (type == FMT_NV21)
+        {
+            v_tmp[i] = uv[j];
+            u_tmp[i] = uv[j+1];
+        }
+        
     }
 }
 
@@ -820,7 +840,7 @@ vv
 yyyy yyyy
 uv    uv
 */
-void yuv420p_to_yuv420sp(unsigned char* yuv420p, unsigned char* yuv420sp, int width, int height)
+void yuv420p_to_yuv420sp(YUV_TYPE type, unsigned char* yuv420p, unsigned char* yuv420sp, int width, int height)
 {
     int i, j;
     int y_size = width * height;
@@ -838,14 +858,47 @@ void yuv420p_to_yuv420sp(unsigned char* yuv420p, unsigned char* yuv420sp, int wi
     // u
     for (j = 0, i = 0; j < y_size/2; j+=2, i++)
     {
-	// 此处可调整U、V的位置，变成NV12或NV21
-#if 01
-        uv_tmp[j] = u[i];
-        uv_tmp[j+1] = v[i];
-#else
-        uv_tmp[j] = v[i];
-        uv_tmp[j+1] = u[i];
-#endif
+        if (type == FMT_NV12)
+        {
+            uv_tmp[j] = u[i];
+            uv_tmp[j+1] = v[i];
+        }
+        else if (type == FMT_NV21)
+        {
+            uv_tmp[j] = v[i];
+            uv_tmp[j+1] = u[i];
+        }
+    }
+}
+
+void yu_to_yv(YUV_TYPE type, unsigned char* yu, unsigned char* yv, int width, int height)
+{
+    int y_size;
+
+    unsigned char* p_y1;
+    unsigned char* p_u1;
+    unsigned char* p_v1;
+
+    unsigned char* p_y2;
+    unsigned char* p_u2;
+    unsigned char* p_v2;
+
+    y_size = width * height;
+
+    p_y1 = yu;
+    p_y2 = yv;
+
+    p_u1  = p_y1 + y_size;
+    p_v1  = p_u1 + y_size / 2;
+
+    p_u2  = p_y2 + y_size;
+    p_v2  = p_u2 + y_size / 2;
+
+    if (type == FMT_YUV422 || type == FMT_YUV420)
+    {
+        memcpy(p_y2, p_y1, y_size);
+        memcpy(p_v2, p_u1, y_size/2);
+        memcpy(p_u2, p_v1, y_size/2);
     }
 }
 
@@ -1512,14 +1565,14 @@ void change_yuv_file(const char* filename, const char* file_out, int width, int 
     fclose(fp);
 
     if (type == 0)
-        yuv420p_to_yuv420sp(yuv_buf, yuv_buf_out, width, height);
+        yuv420p_to_yuv420sp(FMT_NV12, yuv_buf, yuv_buf_out, width, height);
         //yuv420sp_to_yuv420p_1(yuv_buf, width, height);
     if (type == 1)
-        yuv420sp_to_yuv420p(yuv_buf, yuv_buf_out, width, height);
+        yuv420sp_to_yuv420p(FMT_NV12, yuv_buf, yuv_buf_out, width, height);
     if (type == 2)
-        yuv422p_to_yuv422sp(yuv_buf, yuv_buf_out, width, height);
+        yuv422p_to_yuv422sp(FMT_NV16, yuv_buf, yuv_buf_out, width, height);
     if (type == 3)
-        yuv422sp_to_yuv422p(yuv_buf, yuv_buf_out, width, height);
+        yuv422sp_to_yuv422p(FMT_NV16, yuv_buf, yuv_buf_out, width, height);
 
     fp = fopen(file_out, "w");
     fwrite(yuv_buf_out, 1, len, fp);

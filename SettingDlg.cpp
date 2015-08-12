@@ -293,7 +293,7 @@ BOOL CSettingDlg::OnInitDialog()
     // 
     CString strTemp;
 
-#if 01
+#if 0
     // default
     if (!ExistRegistration())
     //if (1)

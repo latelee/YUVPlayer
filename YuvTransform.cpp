@@ -99,6 +99,7 @@ void CYuvTransform::OnBnClickedBSplit()
     // TODO: Add your control notification handler code here
 }
 
+// 格式转换，针对单一文件
 void CYuvTransform::OnBnClickedBTransform()
 {
     UpdateData();
@@ -114,6 +115,7 @@ void CYuvTransform::OnBnClickedBTransform()
 
     if (Malloc() < 0) return;
 
+    // 处理多帧数据
     Read(1);
 
     if (Transform() < 0) return;

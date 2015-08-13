@@ -19,6 +19,7 @@ protected:
 	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV support
 private:
     int     m_nYuvFormat;
+    int     m_nOutputFormat;
     char*   m_pbYuvData;    // YUV数据
     char*   m_pbOutputData;    // RGB数据
     UINT    m_iYuvSize; // 一幅图像大小
@@ -35,7 +36,7 @@ private:
 
 public:
     void ParseFilename(const char* pFilename);
-    INT Open();
+    INT Open(wchar_t* pFile);
     BOOL IsOpen();
     INT Malloc();
     void Read(INT nCurrentFrame);
@@ -56,4 +57,5 @@ public:
     CComboBox m_cbInput;
     CComboBox m_cbOutput;
     afx_msg void OnBnClickedOk();
+    CStatic m_csInfo;
 };

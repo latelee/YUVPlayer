@@ -10,6 +10,11 @@
 
 #include "yuv2rgb.h"
 
+#include <direct.h>
+#include <io.h>
+#include <windows.h>
+
+
 #ifndef MAX_URL_LENGTH
 #define MAX_URL_LENGTH 256
 #endif
@@ -26,6 +31,7 @@ CYuvTransform::CYuvTransform(CWnd* pParent /*=NULL*/)
     m_pbYuvData = NULL;
     m_pbOutputData = NULL;
     m_nYuvFormat = -1;
+    m_nOutputFormat = -1;
     m_nCurrentFrame = 0;
     m_nTotalFrame = 0;
 }
@@ -53,6 +59,7 @@ void CYuvTransform::DoDataExchange(CDataExchange* pDX)
     DDX_Text(pDX, IDC_E_HEIGHT, m_nHeight);
     DDX_Control(pDX, IDC_CB_INFMT, m_cbInput);
     DDX_Control(pDX, IDC_CB_OUTFMT, m_cbOutput);
+    DDX_Control(pDX, IDC_S_PROMAT, m_csInfo);
 }
 
 
@@ -87,16 +94,134 @@ void CYuvTransform::OnBnClickedBOpen()
     UpdateData(FALSE);
 }
 
-
+// 查找目录的yuv文件，不支持其它后缀名
 void CYuvTransform::OnBnClickedBCombine()
 {
-    // TODO: Add your control notification handler code here
+    UpdateData();
+
+    m_nYuvFormat = m_cbInput.GetCurSel();
+
+    if (m_strPathName.IsEmpty() || m_nWidth == 0 || m_nHeight == 0 || m_nYuvFormat == -1)
+    {
+        MessageBox(_T("Sorry, can not do it.Maybe you forgot sth."));
+        return;
+    }
+    //CreateDirectory(_T("./out"), NULL);
+
+    wchar_t szDir[256] = {0};
+    _wsplitpath(m_strPathName.GetBuffer(), NULL, szDir, NULL, NULL);
+
+    m_strPathName = szDir;
+
+    CString strTemp;
+    strTemp.Format(_T("Open %s ok."), m_strPathName);
+    m_csInfo.SetWindowText(strTemp);
+
+    if (Malloc() < 0) return;
+
+    struct _wfinddata_t cfile;    // cfile.name cfile.size
+    intptr_t handle;
+    intptr_t handle_next;
+    int ret = 0;
+
+    ret = _wchdir(m_strPathName.GetBuffer());
+    if (ret < 0)
+    {
+        strTemp.Format(_T("Dir %s not exist."), m_strPathName);
+        m_csInfo.SetWindowText(strTemp);
+        return;
+    }
+    handle = _wfindfirst(_T("*.yuv"), &cfile);    // 查找.yuv
+    if (handle < 0)
+    {
+        strTemp.Format(_T("Dir %s not exist."), m_strPathName);
+        m_csInfo.SetWindowText(strTemp);
+        return;
+    }
+    handle_next = handle;
+    int first = 1;
+    while (handle_next != -1)
+    {
+        if (first)
+        {
+            first = 0;
+
+            wchar_t szExt[16] = {0};
+            wchar_t szFilename1[256] = {0};
+            _wsplitpath(cfile.name, NULL, NULL, szFilename1, szExt); // 要单独开辟空间存储，否则窗口关闭后有非法内存使用
+
+            m_strFileTittle = szFilename1;
+            m_strFileExtern = &szExt[1];
+            
+            m_strOutputFile.Format(_T("%s%s_all.%s"), szDir, m_strFileTittle, m_strFileExtern);
+            m_cOutputFile.Open(m_strOutputFile.GetBuffer(), CFile::modeWrite|CFile::modeCreate);
+        }
+        if (Open(cfile.name) < 0) return;
+
+        Read(m_nCurrentFrame);
+
+        m_cOutputFile.Write(m_pbYuvData, m_iYuvSize);
+        strTemp.Format(_T("combining %s."), cfile.name);
+        m_csInfo.SetWindowText(strTemp);
+        handle_next = _wfindnext(handle, &cfile);    // 查找下一文件
+    }
+
+    _findclose(handle);
+
+    strTemp.Format(_T("Combine finish."));
+    m_csInfo.SetWindowText(strTemp);
+
+    m_cOutputFile.Close();
 }
 
 
 void CYuvTransform::OnBnClickedBSplit()
 {
-    // TODO: Add your control notification handler code here
+    UpdateData();
+
+    m_nYuvFormat = m_cbInput.GetCurSel();
+
+    if (m_strPathName.IsEmpty() || m_nWidth == 0 || m_nHeight == 0 || m_nYuvFormat == -1)
+    {
+        MessageBox(_T("Sorry, can not do it.Maybe you forgot sth."));
+        return;
+    }
+    CreateDirectory(_T("./out"), NULL);
+
+    if (Open(m_strPathName.GetBuffer()) < 0) return;
+
+    CString strTemp;
+    strTemp.Format(_T("Open %s ok."), m_strPathName);
+    m_csInfo.SetWindowText(strTemp);
+
+    if (Malloc() < 0) return;
+
+
+    wchar_t extp[32] = {0};
+    m_cbOutput.GetWindowText((LPTSTR)extp, 32);
+    strTemp = extp;
+    strTemp.MakeLower();
+    
+    while (m_nCurrentFrame < m_nTotalFrame)
+    {
+        if (m_nTotalFrame > 10000)
+            m_strOutputFile.Format(_T("./out/%s_%08d.%s"), m_strFileTittle, m_nCurrentFrame, m_strFileExtern);
+        else
+            m_strOutputFile.Format(_T("./out/%s_%06d.%s"), m_strFileTittle, m_nCurrentFrame, m_strFileExtern);
+        m_cOutputFile.Open(m_strOutputFile.GetBuffer(), CFile::modeWrite|CFile::modeCreate);
+
+        Read(m_nCurrentFrame);
+        m_cOutputFile.Write(m_pbYuvData, m_iYuvSize);
+        m_cOutputFile.Close();
+        
+        strTemp.Format(_T("split to %s finish."), m_strOutputFile);
+        m_csInfo.SetWindowText(strTemp);
+
+        m_nCurrentFrame++;
+    }
+
+    strTemp.Format(_T("Split file finish."));
+    m_csInfo.SetWindowText(strTemp);
 }
 
 // 格式转换，针对单一文件
@@ -105,22 +230,26 @@ void CYuvTransform::OnBnClickedBTransform()
     UpdateData();
 
     m_nYuvFormat = m_cbInput.GetCurSel();
+    m_nOutputFormat = m_cbInput.GetCurSel();
 
-    if (m_strPathName.IsEmpty() || m_nWidth == 0 || m_nHeight == 0)
+    if (m_strPathName.IsEmpty() || m_nWidth == 0 || m_nHeight == 0 || m_nYuvFormat == -1 || m_nOutputFormat == -1)
     {
         MessageBox(_T("Sorry, can not do it.Maybe you forgot sth."));
         return;
     }
     CreateDirectory(_T("./out"), NULL);
 
-    if (Open() < 0) return;
+    if (Open(m_strPathName.GetBuffer()) < 0) return;
+
+    CString strTemp;
+    strTemp.Format(_T("Open %s ok."), m_strPathName);
+    m_csInfo.SetWindowText(strTemp);
 
     if (Malloc() < 0) return;
 
-
     wchar_t extp[32] = {0};
     m_cbOutput.GetWindowText((LPTSTR)extp, 32);
-    CString strTemp = extp;
+    strTemp = extp;
     strTemp.MakeLower();
     m_strOutputFile.Format(_T("./out/%s_%s.%s"), m_strFileTittle, strTemp.GetBuffer(), m_strFileExtern);
     m_cOutputFile.Open(m_strOutputFile.GetBuffer(), CFile::modeWrite|CFile::modeCreate);
@@ -132,6 +261,8 @@ void CYuvTransform::OnBnClickedBTransform()
         {
             m_cOutputFile.Close();
             DeleteFile(m_strOutputFile.GetBuffer());
+            strTemp.Format(_T("Transform failed."));
+            m_csInfo.SetWindowText(strTemp);
             return;
         }
 
@@ -139,6 +270,8 @@ void CYuvTransform::OnBnClickedBTransform()
 
         m_nCurrentFrame++;
     }
+    strTemp.Format(_T("Transform finish."));
+    m_csInfo.SetWindowText(strTemp);
 
     m_cOutputFile.Close();
 }
@@ -196,13 +329,13 @@ void CYuvTransform::ParseFilename(const char* pFilename)
 }
 
 // 内部实现
-INT CYuvTransform::Open()
+INT CYuvTransform::Open(wchar_t* pFile)
 {
     if (CFile::hFileNull != m_cFile.m_hFile)
     {
         m_cFile.Close();
     }
-    if (!m_cFile.Open(m_strPathName.GetBuffer(), CFile::modeRead))
+    if (!m_cFile.Open(pFile,CFile::modeRead))
     {
         MessageBox(_T("Open YUV file failed."));
         return - 1;
@@ -269,7 +402,8 @@ INT CYuvTransform::Malloc()
     m_pbOutputData  = new char[m_iOutputSize];
 
     m_nCurrentFrame = 0;
-    m_nTotalFrame = (UINT)(m_cFile.GetLength() / m_iYuvSize);
+    if (CFile::hFileNull != m_cFile.m_hFile)
+        m_nTotalFrame = (UINT)(m_cFile.GetLength() / m_iYuvSize);
 
     return 0;
 }
@@ -301,58 +435,59 @@ INT CYuvTransform::Write(INT nAppend)
     return 0;
 }
 
+// todo 找个好点的方法
 INT CYuvTransform::Transform()
 {
     UpdateData();
 
-    int nOutput = m_cbOutput.GetCurSel();
+    m_nOutputFormat = m_cbOutput.GetCurSel();
 
-    if (m_nYuvFormat == FMT_YUV422 && (nOutput == FMT_NV16 || nOutput == FMT_NV61))
+    if (m_nYuvFormat == FMT_YUV422 && (m_nOutputFormat == FMT_NV16 || m_nOutputFormat == FMT_NV61))
     {
-        yuv422p_to_yuv422sp((YUV_TYPE)nOutput, (unsigned char*)m_pbYuvData, (unsigned char*)m_pbOutputData, m_nWidth, m_nHeight);
+        yuv422p_to_yuv422sp((YUV_TYPE)m_nOutputFormat, (unsigned char*)m_pbYuvData, (unsigned char*)m_pbOutputData, m_nWidth, m_nHeight);
     }
-    else if ((m_nYuvFormat == FMT_NV16 || m_nYuvFormat == FMT_NV61) &&nOutput == FMT_YUV422)
+    else if ((m_nYuvFormat == FMT_NV16 || m_nYuvFormat == FMT_NV61) &&m_nOutputFormat == FMT_YUV422)
     {
         yuv422sp_to_yuv422p((YUV_TYPE)m_nYuvFormat, (unsigned char*)m_pbYuvData, (unsigned char*)m_pbOutputData, m_nWidth, m_nHeight);
 
     }
-    else if (m_nYuvFormat == FMT_YUV420 && (nOutput == FMT_NV12 || nOutput == FMT_NV21))
+    else if (m_nYuvFormat == FMT_YUV420 && (m_nOutputFormat == FMT_NV12 || m_nOutputFormat == FMT_NV21))
     {
-        yuv420p_to_yuv420sp((YUV_TYPE)nOutput, (unsigned char*)m_pbYuvData, (unsigned char*)m_pbOutputData, m_nWidth, m_nHeight);
+        yuv420p_to_yuv420sp((YUV_TYPE)m_nOutputFormat, (unsigned char*)m_pbYuvData, (unsigned char*)m_pbOutputData, m_nWidth, m_nHeight);
 
     }
-    else if ((m_nYuvFormat == FMT_NV12 || m_nYuvFormat == FMT_NV21) && nOutput == FMT_YUV420)
+    else if ((m_nYuvFormat == FMT_NV12 || m_nYuvFormat == FMT_NV21) && m_nOutputFormat == FMT_YUV420)
     {
         yuv420sp_to_yuv420p((YUV_TYPE)m_nYuvFormat, (unsigned char*)m_pbYuvData, (unsigned char*)m_pbOutputData, m_nWidth, m_nHeight);
 
     }
-    else if (m_nYuvFormat == FMT_YUV422 && nOutput == FMT_YV16)
+    else if (m_nYuvFormat == FMT_YUV422 && m_nOutputFormat == FMT_YV16)
     {
         yu_to_yv((YUV_TYPE)m_nYuvFormat, (unsigned char*)m_pbYuvData, (unsigned char*)m_pbOutputData, m_nWidth, m_nHeight);
 
     }
-    else if (m_nYuvFormat == FMT_YUV420 && nOutput == FMT_YV12)
+    else if (m_nYuvFormat == FMT_YUV420 && m_nOutputFormat == FMT_YV12)
     {
         yu_to_yv((YUV_TYPE)m_nYuvFormat, (unsigned char*)m_pbYuvData, (unsigned char*)m_pbOutputData, m_nWidth, m_nHeight);
 
     }
-    else if (m_nYuvFormat == FMT_YV16 && nOutput == FMT_YUV422)
+    else if (m_nYuvFormat == FMT_YV16 && m_nOutputFormat == FMT_YUV422)
     {
         yv_to_yu((YUV_TYPE)m_nYuvFormat, (unsigned char*)m_pbYuvData, (unsigned char*)m_pbOutputData, m_nWidth, m_nHeight);
 
     }
-    else if (m_nYuvFormat == FMT_YV12 && nOutput == FMT_YUV420)
+    else if (m_nYuvFormat == FMT_YV12 && m_nOutputFormat == FMT_YUV420)
     {
         yv_to_yu((YUV_TYPE)m_nYuvFormat, (unsigned char*)m_pbYuvData, (unsigned char*)m_pbOutputData, m_nWidth, m_nHeight);
 
     }
-    else if ((m_nYuvFormat == FMT_YUV422 || m_nYuvFormat == FMT_YV16) && (nOutput == FMT_YUYV || nOutput == FMT_YVYU || nOutput == FMT_UYVY || nOutput == FMT_VYUY))
+    else if ((m_nYuvFormat == FMT_YUV422 || m_nYuvFormat == FMT_YV16) && (m_nOutputFormat == FMT_YUYV || m_nOutputFormat == FMT_YVYU || m_nOutputFormat == FMT_UYVY || m_nOutputFormat == FMT_VYUY))
     {
-        yuv422p_to_yuv422packed((YUV_TYPE)m_nYuvFormat, (YUV_TYPE)nOutput, (unsigned char*)m_pbYuvData, (unsigned char*)m_pbOutputData, m_nWidth, m_nHeight);
+        yuv422p_to_yuv422packed((YUV_TYPE)m_nYuvFormat, (YUV_TYPE)m_nOutputFormat, (unsigned char*)m_pbYuvData, (unsigned char*)m_pbOutputData, m_nWidth, m_nHeight);
     }
-        else if ((m_nYuvFormat == FMT_YUYV || m_nYuvFormat == FMT_YVYU || m_nYuvFormat == FMT_UYVY || m_nYuvFormat == FMT_VYUY) &&(nOutput == FMT_YUV422 || nOutput == FMT_YV16))
+        else if ((m_nYuvFormat == FMT_YUYV || m_nYuvFormat == FMT_YVYU || m_nYuvFormat == FMT_UYVY || m_nYuvFormat == FMT_VYUY) &&(m_nOutputFormat == FMT_YUV422 || m_nOutputFormat == FMT_YV16))
     {
-        yuv422packed_to_yuv422p((YUV_TYPE)m_nYuvFormat, (YUV_TYPE)nOutput, (unsigned char*)m_pbYuvData, (unsigned char*)m_pbOutputData, m_nWidth, m_nHeight);
+        yuv422packed_to_yuv422p((YUV_TYPE)m_nYuvFormat, (YUV_TYPE)m_nOutputFormat, (unsigned char*)m_pbYuvData, (unsigned char*)m_pbOutputData, m_nWidth, m_nHeight);
     }
     else
     {
@@ -365,7 +500,6 @@ INT CYuvTransform::Transform()
 
 void CYuvTransform::OnBnClickedOk()
 {
-    // TODO: Add your control notification handler code here
     if (CFile::hFileNull != m_cFile.m_hFile)
     {
         m_cFile.Close();

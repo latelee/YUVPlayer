@@ -172,6 +172,8 @@ void yuv422p_to_yuv422sp(YUV_TYPE type, unsigned char* yuv422p, unsigned char* y
 void yuv422sp_to_yuv422p(YUV_TYPE type, unsigned char* yuv422sp, unsigned char* yuv422p, int width, int height);
 void yuv420p_to_yuv420sp(YUV_TYPE type, unsigned char* yuv420p, unsigned char* yuv420sp, int width, int height);
 void yuv420sp_to_yuv420p(YUV_TYPE type, unsigned char* yuv420sp, unsigned char* yuv420p, int width, int height);
+void yuv422p_to_yuv422packed(YUV_TYPE type1, YUV_TYPE type2, unsigned char* yuv422p, unsigned char* yuv, int width, int height);
+void yuv422packed_to_yuv422p(YUV_TYPE type1, YUV_TYPE type2, unsigned char* yuv422p, unsigned char* yuv, int width, int height);
 
 void yu_to_yv(YUV_TYPE type, unsigned char* yu, unsigned char* yv, int width, int height);
 void yv_to_yu(YUV_TYPE type, unsigned char* yuv420sp, unsigned char* yuv420p, int width, int height);

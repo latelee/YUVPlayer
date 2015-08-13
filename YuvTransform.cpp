@@ -346,7 +346,14 @@ INT CYuvTransform::Transform()
         yv_to_yu((YUV_TYPE)m_nYuvFormat, (unsigned char*)m_pbYuvData, (unsigned char*)m_pbOutputData, m_nWidth, m_nHeight);
 
     }
-    
+    else if ((m_nYuvFormat == FMT_YUV422 || m_nYuvFormat == FMT_YV16) && (nOutput == FMT_YUYV || nOutput == FMT_YVYU || nOutput == FMT_UYVY || nOutput == FMT_VYUY))
+    {
+        yuv422p_to_yuv422packed((YUV_TYPE)m_nYuvFormat, (YUV_TYPE)nOutput, (unsigned char*)m_pbYuvData, (unsigned char*)m_pbOutputData, m_nWidth, m_nHeight);
+    }
+        else if ((m_nYuvFormat == FMT_YUYV || m_nYuvFormat == FMT_YVYU || m_nYuvFormat == FMT_UYVY || m_nYuvFormat == FMT_VYUY) &&(nOutput == FMT_YUV422 || nOutput == FMT_YV16))
+    {
+        yuv422packed_to_yuv422p((YUV_TYPE)m_nYuvFormat, (YUV_TYPE)nOutput, (unsigned char*)m_pbYuvData, (unsigned char*)m_pbOutputData, m_nWidth, m_nHeight);
+    }
     else
     {
         MessageBox(_T("Sorry, can not do it."));

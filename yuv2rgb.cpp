@@ -888,17 +888,72 @@ void yu_to_yv(YUV_TYPE type, unsigned char* yu, unsigned char* yv, int width, in
     p_y1 = yu;
     p_y2 = yv;
 
-    p_u1  = p_y1 + y_size;
-    p_v1  = p_u1 + y_size / 2;
-
-    p_u2  = p_y2 + y_size;
-    p_v2  = p_u2 + y_size / 2;
-
-    if (type == FMT_YUV422 || type == FMT_YUV420)
+    if (type == FMT_YUV422)
     {
+        p_u1  = p_y1 + y_size;
+        p_v1  = p_u1 + y_size / 2;
+
+        p_u2  = p_y2 + y_size;
+        p_v2  = p_u2 + y_size / 2;
+
         memcpy(p_y2, p_y1, y_size);
         memcpy(p_v2, p_u1, y_size/2);
         memcpy(p_u2, p_v1, y_size/2);
+    }
+    if (type == FMT_YUV420)
+    {
+        p_u1  = p_y1 + y_size;
+        p_v1  = p_u1 + y_size / 4;
+
+        p_u2  = p_y2 + y_size;
+        p_v2  = p_u2 + y_size / 4;
+
+        memcpy(p_y2, p_y1, y_size);
+        memcpy(p_v2, p_u1, y_size/4);
+        memcpy(p_u2, p_v1, y_size/4);
+    }
+}
+
+void yv_to_yu(YUV_TYPE type, unsigned char* yv, unsigned char* yu, int width, int height)
+{
+    int y_size;
+
+    unsigned char* p_y1;
+    unsigned char* p_u1;
+    unsigned char* p_v1;
+
+    unsigned char* p_y2;
+    unsigned char* p_u2;
+    unsigned char* p_v2;
+
+    y_size = width * height;
+
+    p_y1 = yv;
+    p_y2 = yu;
+
+    if (type == FMT_YV16)
+    {
+        p_u1  = p_y1 + y_size;
+        p_v1  = p_u1 + y_size / 2;
+
+        p_u2  = p_y2 + y_size;
+        p_v2  = p_u2 + y_size / 2;
+
+        memcpy(p_y2, p_y1, y_size);
+        memcpy(p_v2, p_u1, y_size/2);
+        memcpy(p_u2, p_v1, y_size/2);
+    }
+    if (type == FMT_YV12)
+    {
+        p_u1  = p_y1 + y_size;
+        p_v1  = p_u1 + y_size / 4;
+
+        p_u2  = p_y2 + y_size;
+        p_v2  = p_u2 + y_size / 4;
+
+        memcpy(p_y2, p_y1, y_size);
+        memcpy(p_v2, p_u1, y_size/4);
+        memcpy(p_u2, p_v1, y_size/4);
     }
 }
 

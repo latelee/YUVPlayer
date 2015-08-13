@@ -336,6 +336,17 @@ INT CYuvTransform::Transform()
         yu_to_yv((YUV_TYPE)m_nYuvFormat, (unsigned char*)m_pbYuvData, (unsigned char*)m_pbOutputData, m_nWidth, m_nHeight);
 
     }
+    else if (m_nYuvFormat == FMT_YV16 && nOutput == FMT_YUV422)
+    {
+        yv_to_yu((YUV_TYPE)m_nYuvFormat, (unsigned char*)m_pbYuvData, (unsigned char*)m_pbOutputData, m_nWidth, m_nHeight);
+
+    }
+    else if (m_nYuvFormat == FMT_YV12 && nOutput == FMT_YUV420)
+    {
+        yv_to_yu((YUV_TYPE)m_nYuvFormat, (unsigned char*)m_pbYuvData, (unsigned char*)m_pbOutputData, m_nWidth, m_nHeight);
+
+    }
+    
     else
     {
         MessageBox(_T("Sorry, can not do it."));

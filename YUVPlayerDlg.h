@@ -61,6 +61,7 @@ public:
     INT m_nCurrentFrame; // 当前帧，从1开始计算，但seek文件时会自动减1
     static BOOL m_fPause;
     static BOOL m_fEnd;
+    static BOOL m_fPlay;
 
     // 共用内部函数
     void Open();

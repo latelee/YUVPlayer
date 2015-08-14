@@ -14,8 +14,9 @@
 #define new DEBUG_NEW
 #endif
 
-int CYUVPlayerDlg::m_fPause = FALSE;
-int CYUVPlayerDlg::m_fEnd = FALSE;
+BOOL CYUVPlayerDlg::m_fPause = FALSE;
+BOOL CYUVPlayerDlg::m_fEnd = FALSE;
+BOOL CYUVPlayerDlg::m_fPlay = TRUE;
 
 UINT Play(LPVOID pParam);
 
@@ -364,16 +365,6 @@ void CYUVPlayerDlg::ShowSettingWindow()
     }
 
     m_pSettingDlg->ShowWindow(SW_SHOW);
-    //m_pSettingDlg->CenterWindow(this);
-    //m_pParentWnd->CenterWindow(this);
-
-    /*
-    CWnd *pWnd = GetDlgItem(IDD_DIALOG_SETTING);
-    if (pWnd)
-    {
-        pWnd->SetWindowPos( NULL,4,10,0,0,SWP_NOZORDER|SWP_NOSIZE);
-    }
-    */
 }
 
 // -------------------------------------------------------
@@ -500,6 +491,10 @@ void CYUVPlayerDlg::OnRExit()
 /////////////////////////////////////////// ------> 单击按钮事件
 void CYUVPlayerDlg::OnBnClickedButtonOpen()
 {
+    KillTimer(1);
+    m_bPlay.SetBitmap(LoadBitmap(AfxGetInstanceHandle(), MAKEINTRESOURCE(IDB_BM_PLAY)));
+    m_fPlay = TRUE;
+
     wchar_t szFilter[] = _T("YUV Files(*.yuv;*.raw)|*.yuv;*.raw|All Files(*.*)|*.*||");
     CFileDialog fileDlg(TRUE, _T("YUV"), NULL, OFN_HIDEREADONLY | OFN_NOCHANGEDIR | OFN_FILEMUSTEXIST, szFilter);
     fileDlg.GetOFN().lpstrTitle = _T("Open YUV File");   // 标题
@@ -542,6 +537,10 @@ void CYUVPlayerDlg::OnBnClickedButtonSave()
 
     int nType = 0;
 
+    KillTimer(1);
+    m_bPlay.SetBitmap(LoadBitmap(AfxGetInstanceHandle(), MAKEINTRESOURCE(IDB_BM_PLAY)));
+    m_fPlay = TRUE;
+
     // 找文件名
     _wsplitpath(m_strPathName, NULL, NULL, szFileName, szExt);
     if (wcscmp(szExt, _T("yuv")))
@@ -565,25 +564,22 @@ void CYUVPlayerDlg::OnBnClickedButtonSave()
         nSize = m_iRgbSize;
     }
 
-    cFile.Open(fileDlg.GetFileName(), CFile::modeWrite|CFile::modeCreate);
+    cFile.Open(fileDlg.GetPathName(), CFile::modeWrite|CFile::modeCreate);
     cFile.Write(pData, nSize);
     cFile.Close();
 }
 
 
-
 void CYUVPlayerDlg::OnBnClickedButtonPlay()
 {
-    static BOOL bPlay = TRUE;
-
     m_bStop.EnableWindow(TRUE);
 
-    if (bPlay)
+    if (m_fPlay)
     {
         SetTimer(1,1000/m_nFps,NULL);
         m_bPlay.SetBitmap(LoadBitmap(AfxGetInstanceHandle(), MAKEINTRESOURCE(IDB_BM_PAUSE)));
         m_bStop.EnableWindow(TRUE);
-        bPlay = FALSE;
+        m_fPlay = FALSE;
     }
     else
     {
@@ -593,59 +589,30 @@ void CYUVPlayerDlg::OnBnClickedButtonPlay()
         if (m_fPause == FALSE)
         {
             m_bStop.EnableWindow(FALSE);
-            bPlay = TRUE;
+            m_fPlay = TRUE;
         }
         if (m_fEnd == TRUE)
         {
             m_bStop.EnableWindow(FALSE);
-            bPlay = TRUE;
-            m_nCurrentFrame = 1;
+            m_fPlay = TRUE;
         }
     }
 
-    
-#if 0
-    HANDLE hPlay = NULL;
-    hPlay = OpenMutex(MUTEX_ALL_ACCESS, FALSE, _T("Play"));
-
-    if (!hPlay)
-    {
-        CString msg;
-        //printErrorMessage("Open Mutex failed.", msg);
-        MessageBox(msg);
-        return;
-    }
-
-    if (bPlay)
-    {
-        WaitForSingleObject(hPlay, 0);
-        //MessageBox("Play...");
-    }
-    else
-    {
-        ReleaseMutex(hPlay);
-        //MessageBox("Pause...");
-    }
-#endif
     if (m_fPause)
     {
+        SetTimer(1,1000/m_nFps,NULL);
         m_bPlay.SetBitmap(LoadBitmap(AfxGetInstanceHandle(), MAKEINTRESOURCE(IDB_BM_PAUSE)));
         m_bStop.EnableWindow(TRUE);
         m_fPause = FALSE;
-        //ReleaseMutex(hPlay);
     }
     if (m_fEnd)
     {
+        SetTimer(1,1000/m_nFps,NULL);
         m_bPlay.SetBitmap(LoadBitmap(AfxGetInstanceHandle(), MAKEINTRESOURCE(IDB_BM_PAUSE)));
         m_bStop.EnableWindow(TRUE);
+        m_nCurrentFrame = 1;
         m_fEnd = FALSE;
-        //m_nCurrentFrame = 1;
-        //ReleaseMutex(hPlay);
     }
-    return;
-
-    if (m_pWinThread == NULL)
-        m_pWinThread = AfxBeginThread(Play, this);
 }
 
 void CYUVPlayerDlg::OnTimer(UINT_PTR nIDEvent)
@@ -654,63 +621,15 @@ void CYUVPlayerDlg::OnTimer(UINT_PTR nIDEvent)
 
     Read(m_nCurrentFrame);
     Show();
-
-    m_bStop.EnableWindow(FALSE);
-    m_bPlay.SetBitmap(LoadBitmap(AfxGetInstanceHandle(), MAKEINTRESOURCE(IDB_BM_PLAY)));
-    
+  
+    return;
     if (m_nCurrentFrame >= m_nTotalFrame)
     {
         m_fEnd = TRUE;
-        //m_nCurrentFrame = 1;
+        m_bStop.EnableWindow(FALSE);
+        m_bPlay.SetBitmap(LoadBitmap(AfxGetInstanceHandle(), MAKEINTRESOURCE(IDB_BM_PLAY)));
         KillTimer(1);
     }
-}
-
-// 播放线程
-UINT Play(LPVOID pParam)
-{
-    CYUVPlayerDlg* pWin = (CYUVPlayerDlg *)pParam;  // 对话框类
-
-    HANDLE hPlay = OpenMutex(MUTEX_ALL_ACCESS, FALSE, _T("Play"));
-
-    if (!hPlay)
-    {
-        CString msg;
-        //printErrorMessage("Open Mutex failed.", msg);
-        MessageBox(pWin->m_hWnd, msg, NULL, MB_OK);
-    }
-
-    do {
-        while (pWin->m_nCurrentFrame < pWin->m_nTotalFrame)
-        {
-            int iTimeSpan = 1000 / pWin->m_nFps;
-            DWORD t1 = GetTickCount();
-
-            if (WAIT_OBJECT_0 == WaitForSingleObject(hPlay,INFINITE))
-            {
-                ReleaseMutex(hPlay);
-            }
-            pWin->m_nCurrentFrame++;
-            pWin->Read(pWin->m_nCurrentFrame);
-            pWin->Show();
-
-            DWORD t2 = GetTickCount();
-            int t = t2 - t1;
-            if (t < iTimeSpan)
-                Sleep(iTimeSpan - t);
-        }
-        if (pWin->m_fLoop)
-            pWin->m_nCurrentFrame = 1;
-    } while (pWin->m_fLoop);
-    pWin->m_bStop.EnableWindow(FALSE);
-    pWin->m_bPlay.SetBitmap(LoadBitmap(AfxGetInstanceHandle(), MAKEINTRESOURCE(IDB_BM_PLAY)));
-
-    pWin->m_fEnd = TRUE;
-
-    pWin->m_pWinThread = NULL;
-    AfxEndThread(0);
-
-    return 0;
 }
 
 void CYUVPlayerDlg::OnBnClickedButtonStop()
@@ -718,17 +637,6 @@ void CYUVPlayerDlg::OnBnClickedButtonStop()
     m_fPause = TRUE;
 
     KillTimer(1);
-#if 0
-    HANDLE hPlay = NULL;
-    hPlay = OpenMutex(MUTEX_ALL_ACCESS, FALSE, _T("Play"));
-
-    if (!hPlay)
-    {
-        return;
-    }
-
-    WaitForSingleObject(hPlay,INFINITE);
-#endif
     m_bPlay.SetBitmap(LoadBitmap(AfxGetInstanceHandle(), MAKEINTRESOURCE(IDB_BM_PLAY)));
     m_bStop.EnableWindow(FALSE);
     OnBnClickedButtonFirst();
@@ -738,6 +646,7 @@ void CYUVPlayerDlg::OnBnClickedButtonStop()
 void CYUVPlayerDlg::OnBnClickedButtonPrev()
 {
     KillTimer(1);
+    m_bPlay.SetBitmap(LoadBitmap(AfxGetInstanceHandle(), MAKEINTRESOURCE(IDB_BM_PLAY)));
     m_nCurrentFrame--;
     if (m_nCurrentFrame <= 1)
     {
@@ -752,7 +661,7 @@ void CYUVPlayerDlg::OnBnClickedButtonPrev()
 void CYUVPlayerDlg::OnBnClickedButtonNext()
 {
     KillTimer(1);
-
+    m_bPlay.SetBitmap(LoadBitmap(AfxGetInstanceHandle(), MAKEINTRESOURCE(IDB_BM_PLAY)));
     m_nCurrentFrame++;
 
     if (m_nCurrentFrame >= m_nTotalFrame)
@@ -767,7 +676,6 @@ void CYUVPlayerDlg::OnBnClickedButtonNext()
 
 void CYUVPlayerDlg::OnBnClickedButtonFirst()
 {
-    KillTimer(1);
     m_nCurrentFrame = 1;
     this->Read(m_nCurrentFrame);
     this->Show();
@@ -942,21 +850,20 @@ void CYUVPlayerDlg::Malloc()
     default:
         break;
     }
-
-    m_iRgbSize = m_nWidth * m_nHeight * 3 + 54;
-
     if (m_pbYuvData != NULL)
     {
         delete[] m_pbYuvData;
         m_pbYuvData = NULL;
     }
 
-    // 此处有问题，当分辨率不是预留之中的时候，更改YUV格式后会挂掉
+    // 此处有问题，更改YUV格式后会挂掉
     if (m_pbRgbData != NULL)
     {
         delete[] m_pbRgbData;
         m_pbRgbData = NULL;
     }
+
+    m_iRgbSize = m_nWidth * m_nHeight * 3 + 54;
 
     m_pbYuvData = new char[m_iYuvSize];
     m_pbRgbData  = new char[m_iRgbSize];
@@ -970,6 +877,14 @@ void CYUVPlayerDlg::Malloc()
 
 void CYUVPlayerDlg::Read(INT nCurrentFrame)
 {
+    if (m_nCurrentFrame > m_nTotalFrame)
+    {
+        m_fEnd = TRUE;
+        m_bStop.EnableWindow(FALSE);
+        m_bPlay.SetBitmap(LoadBitmap(AfxGetInstanceHandle(), MAKEINTRESOURCE(IDB_BM_PLAY)));
+        KillTimer(1);
+        return;
+    }
     this->ShowFrameCount(nCurrentFrame); // 读一帧时，顺便显示出当前帧
     m_cFile.Seek(m_iYuvSize * (nCurrentFrame - 1), SEEK_SET);
     m_cFile.Read(m_pbYuvData, m_iYuvSize);
@@ -1036,8 +951,6 @@ void CYUVPlayerDlg::ShowOpenedFrame()
     m_bLastFrame.EnableWindow(TRUE);
 
     m_slProgress.EnableWindow(TRUE);
-    //m_slProgress.SetLineSize(1);
-    //m_slProgress.SetPageSize(1);
 }
 
 inline void RenderBitmap(CWnd *pWnd, Bitmap* pbmp)

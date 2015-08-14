@@ -888,17 +888,190 @@ void yu_to_yv(YUV_TYPE type, unsigned char* yu, unsigned char* yv, int width, in
     p_y1 = yu;
     p_y2 = yv;
 
-    p_u1  = p_y1 + y_size;
-    p_v1  = p_u1 + y_size / 2;
-
-    p_u2  = p_y2 + y_size;
-    p_v2  = p_u2 + y_size / 2;
-
-    if (type == FMT_YUV422 || type == FMT_YUV420)
+    if (type == FMT_YUV422)
     {
+        p_u1  = p_y1 + y_size;
+        p_v1  = p_u1 + y_size / 2;
+
+        p_u2  = p_y2 + y_size;
+        p_v2  = p_u2 + y_size / 2;
+
         memcpy(p_y2, p_y1, y_size);
         memcpy(p_v2, p_u1, y_size/2);
         memcpy(p_u2, p_v1, y_size/2);
+    }
+    if (type == FMT_YUV420)
+    {
+        p_u1  = p_y1 + y_size;
+        p_v1  = p_u1 + y_size / 4;
+
+        p_u2  = p_y2 + y_size;
+        p_v2  = p_u2 + y_size / 4;
+
+        memcpy(p_y2, p_y1, y_size);
+        memcpy(p_v2, p_u1, y_size/4);
+        memcpy(p_u2, p_v1, y_size/4);
+    }
+}
+
+void yv_to_yu(YUV_TYPE type, unsigned char* yv, unsigned char* yu, int width, int height)
+{
+    int y_size;
+
+    unsigned char* p_y1;
+    unsigned char* p_u1;
+    unsigned char* p_v1;
+
+    unsigned char* p_y2;
+    unsigned char* p_u2;
+    unsigned char* p_v2;
+
+    y_size = width * height;
+
+    p_y1 = yv;
+    p_y2 = yu;
+
+    if (type == FMT_YV16)
+    {
+        p_u1  = p_y1 + y_size;
+        p_v1  = p_u1 + y_size / 2;
+
+        p_u2  = p_y2 + y_size;
+        p_v2  = p_u2 + y_size / 2;
+
+        memcpy(p_y2, p_y1, y_size);
+        memcpy(p_v2, p_u1, y_size/2);
+        memcpy(p_u2, p_v1, y_size/2);
+    }
+    if (type == FMT_YV12)
+    {
+        p_u1  = p_y1 + y_size;
+        p_v1  = p_u1 + y_size / 4;
+
+        p_u2  = p_y2 + y_size;
+        p_v2  = p_u2 + y_size / 4;
+
+        memcpy(p_y2, p_y1, y_size);
+        memcpy(p_v2, p_u1, y_size/4);
+        memcpy(p_u2, p_v1, y_size/4);
+    }
+}
+
+void yuv422p_to_yuv422packed(YUV_TYPE type1, YUV_TYPE type2, unsigned char* yuv422p, unsigned char* yuv, int width, int height)
+{
+    int i = 0;
+    unsigned char* p_y;
+    unsigned char* p_u;
+    unsigned char* p_v;
+    unsigned char* p_yuv;
+
+    p_y = yuv422p;
+    p_u = p_y + width * height;
+    p_v = p_u + width * height / 2;
+
+    if (type1 == FMT_YV16)
+    {
+        p_v = p_y + width * height;
+        p_u = p_u + width * height / 2;
+    }
+    p_yuv = yuv;
+
+    for (i = 0; i < width * height / 2; i++)
+    {
+        switch(type2)
+        {
+        case FMT_YUYV:
+            p_yuv[0] = p_y[0];
+            p_yuv[1] = p_u[0];
+            p_yuv[2] = p_y[1];
+            p_yuv[3] = p_v[0];
+            break;
+        case FMT_YVYU:
+            p_yuv[0] = p_y[0];
+            p_yuv[1] = p_v[0];
+            p_yuv[2] = p_y[1];
+            p_yuv[3] = p_u[0];
+            break;
+        case FMT_UYVY:
+            p_yuv[0] = p_u[0];
+            p_yuv[1] = p_y[0];
+            p_yuv[2] = p_v[0];
+            p_yuv[3] = p_y[1];
+            break;
+        case FMT_VYUY:
+            p_yuv[0] = p_v[0];
+            p_yuv[1] = p_y[0];
+            p_yuv[2] = p_u[0];
+            p_yuv[3] = p_y[1];
+            break;
+        default:
+            break;
+        }
+
+        p_y += 2;
+        p_u += 1;
+        p_v += 1;
+        p_yuv += 4;
+    }
+}
+
+void yuv422packed_to_yuv422p(YUV_TYPE type1, YUV_TYPE type2, unsigned char* yuv, unsigned char* yuv422p, int width, int height)
+{
+    int i = 0;
+    unsigned char* p_y;
+    unsigned char* p_u;
+    unsigned char* p_v;
+    unsigned char* p_yuv;
+
+    p_yuv = yuv;
+
+    p_y = yuv422p;
+    p_u = p_y + width * height;
+    p_v = p_u + width * height / 2;
+
+    if (type2 == FMT_YV16)
+    {
+        p_v = p_y + width * height;
+        p_u = p_u + width * height / 2;
+    }
+    
+
+    for (i = 0; i < width * height / 2; i++)
+    {
+        switch(type1)
+        {
+        case FMT_YUYV:
+            p_y[0] = p_yuv[0];
+            p_u[0] = p_yuv[1];
+            p_y[1] = p_yuv[2];
+            p_v[0] = p_yuv[3];
+            break;
+        case FMT_YVYU:
+            p_y[0] = p_yuv[0];
+            p_v[0] = p_yuv[1];
+            p_y[1] = p_yuv[2];
+            p_u[0] = p_yuv[3];
+            break;
+        case FMT_UYVY:
+            p_u[0] = p_yuv[0];
+            p_y[0] = p_yuv[1];
+            p_v[0] = p_yuv[2];
+            p_y[1] = p_yuv[3];
+            break;
+        case FMT_VYUY:
+            p_v[0] = p_yuv[0];
+            p_y[0] = p_yuv[1];
+            p_u[0] = p_yuv[2];
+            p_y[1] = p_yuv[3];
+            break;
+        default:
+            break;
+        }
+
+        p_y += 2;
+        p_u += 1;
+        p_v += 1;
+        p_yuv += 4;
     }
 }
 

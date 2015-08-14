@@ -951,6 +951,7 @@ void CYUVPlayerDlg::Malloc()
         m_pbYuvData = NULL;
     }
 
+    // 此处有问题，当分辨率不是预留之中的时候，更改YUV格式后会挂掉
     if (m_pbRgbData != NULL)
     {
         delete[] m_pbRgbData;

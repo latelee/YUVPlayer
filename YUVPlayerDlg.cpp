@@ -190,6 +190,7 @@ BEGIN_MESSAGE_MAP(CYUVPlayerDlg, CDialogEx)
     ON_WM_DROPFILES()
     ON_COMMAND(ID_HELP_TRANSFORM, &CYUVPlayerDlg::OnHelpTransform)
     ON_WM_HSCROLL()
+    ON_WM_TIMER()
 END_MESSAGE_MAP()
 
 // CYUVPlayerDlg 消息处理程序
@@ -579,12 +580,14 @@ void CYUVPlayerDlg::OnBnClickedButtonPlay()
 
     if (bPlay)
     {
+        SetTimer(1,1000/m_nFps,NULL);
         m_bPlay.SetBitmap(LoadBitmap(AfxGetInstanceHandle(), MAKEINTRESOURCE(IDB_BM_PAUSE)));
         m_bStop.EnableWindow(TRUE);
         bPlay = FALSE;
     }
     else
     {
+        KillTimer(1);
         m_bPlay.SetBitmap(LoadBitmap(AfxGetInstanceHandle(), MAKEINTRESOURCE(IDB_BM_PLAY)));
         
         if (m_fPause == FALSE)
@@ -600,6 +603,8 @@ void CYUVPlayerDlg::OnBnClickedButtonPlay()
         }
     }
 
+    
+#if 0
     HANDLE hPlay = NULL;
     hPlay = OpenMutex(MUTEX_ALL_ACCESS, FALSE, _T("Play"));
 
@@ -621,25 +626,44 @@ void CYUVPlayerDlg::OnBnClickedButtonPlay()
         ReleaseMutex(hPlay);
         //MessageBox("Pause...");
     }
-
+#endif
     if (m_fPause)
     {
         m_bPlay.SetBitmap(LoadBitmap(AfxGetInstanceHandle(), MAKEINTRESOURCE(IDB_BM_PAUSE)));
         m_bStop.EnableWindow(TRUE);
         m_fPause = FALSE;
-        ReleaseMutex(hPlay);
+        //ReleaseMutex(hPlay);
     }
     if (m_fEnd)
     {
         m_bPlay.SetBitmap(LoadBitmap(AfxGetInstanceHandle(), MAKEINTRESOURCE(IDB_BM_PAUSE)));
         m_bStop.EnableWindow(TRUE);
         m_fEnd = FALSE;
-        m_nCurrentFrame = 1;
-        ReleaseMutex(hPlay);
+        //m_nCurrentFrame = 1;
+        //ReleaseMutex(hPlay);
     }
+    return;
 
     if (m_pWinThread == NULL)
         m_pWinThread = AfxBeginThread(Play, this);
+}
+
+void CYUVPlayerDlg::OnTimer(UINT_PTR nIDEvent)
+{
+    m_nCurrentFrame++;
+
+    Read(m_nCurrentFrame);
+    Show();
+
+    m_bStop.EnableWindow(FALSE);
+    m_bPlay.SetBitmap(LoadBitmap(AfxGetInstanceHandle(), MAKEINTRESOURCE(IDB_BM_PLAY)));
+    
+    if (m_nCurrentFrame >= m_nTotalFrame)
+    {
+        m_fEnd = TRUE;
+        //m_nCurrentFrame = 1;
+        KillTimer(1);
+    }
 }
 
 // 播放线程
@@ -693,6 +717,8 @@ void CYUVPlayerDlg::OnBnClickedButtonStop()
 {
     m_fPause = TRUE;
 
+    KillTimer(1);
+#if 0
     HANDLE hPlay = NULL;
     hPlay = OpenMutex(MUTEX_ALL_ACCESS, FALSE, _T("Play"));
 
@@ -702,7 +728,7 @@ void CYUVPlayerDlg::OnBnClickedButtonStop()
     }
 
     WaitForSingleObject(hPlay,INFINITE);
-
+#endif
     m_bPlay.SetBitmap(LoadBitmap(AfxGetInstanceHandle(), MAKEINTRESOURCE(IDB_BM_PLAY)));
     m_bStop.EnableWindow(FALSE);
     OnBnClickedButtonFirst();
@@ -711,6 +737,7 @@ void CYUVPlayerDlg::OnBnClickedButtonStop()
 
 void CYUVPlayerDlg::OnBnClickedButtonPrev()
 {
+    KillTimer(1);
     m_nCurrentFrame--;
     if (m_nCurrentFrame <= 1)
     {
@@ -724,6 +751,8 @@ void CYUVPlayerDlg::OnBnClickedButtonPrev()
 
 void CYUVPlayerDlg::OnBnClickedButtonNext()
 {
+    KillTimer(1);
+
     m_nCurrentFrame++;
 
     if (m_nCurrentFrame >= m_nTotalFrame)
@@ -738,6 +767,7 @@ void CYUVPlayerDlg::OnBnClickedButtonNext()
 
 void CYUVPlayerDlg::OnBnClickedButtonFirst()
 {
+    KillTimer(1);
     m_nCurrentFrame = 1;
     this->Read(m_nCurrentFrame);
     this->Show();
@@ -746,6 +776,7 @@ void CYUVPlayerDlg::OnBnClickedButtonFirst()
 
 void CYUVPlayerDlg::OnBnClickedButtonLast()
 {
+    KillTimer(1);
     m_nCurrentFrame = m_nTotalFrame;
     this->Read(m_nCurrentFrame);
     this->Show();

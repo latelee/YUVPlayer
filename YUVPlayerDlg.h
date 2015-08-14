@@ -126,4 +126,5 @@ public:
     afx_msg void OnHelpTransform();
     CSliderCtrl m_slProgress;
     afx_msg void OnHScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar);
+    afx_msg void OnTimer(UINT_PTR nIDEvent);
 };

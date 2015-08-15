@@ -618,18 +618,8 @@ void CYUVPlayerDlg::OnBnClickedButtonPlay()
 void CYUVPlayerDlg::OnTimer(UINT_PTR nIDEvent)
 {
     m_nCurrentFrame++;
-
     Read(m_nCurrentFrame);
     Show();
-  
-    return;
-    if (m_nCurrentFrame >= m_nTotalFrame)
-    {
-        m_fEnd = TRUE;
-        m_bStop.EnableWindow(FALSE);
-        m_bPlay.SetBitmap(LoadBitmap(AfxGetInstanceHandle(), MAKEINTRESOURCE(IDB_BM_PLAY)));
-        KillTimer(1);
-    }
 }
 
 void CYUVPlayerDlg::OnBnClickedButtonStop()
@@ -646,9 +636,10 @@ void CYUVPlayerDlg::OnBnClickedButtonStop()
 void CYUVPlayerDlg::OnBnClickedButtonPrev()
 {
     KillTimer(1);
+    m_fPlay = TRUE;
     m_bPlay.SetBitmap(LoadBitmap(AfxGetInstanceHandle(), MAKEINTRESOURCE(IDB_BM_PLAY)));
     m_nCurrentFrame--;
-    if (m_nCurrentFrame <= 1)
+    if (m_nCurrentFrame < 1)
     {
         m_nCurrentFrame = 1;
         return;
@@ -661,6 +652,7 @@ void CYUVPlayerDlg::OnBnClickedButtonPrev()
 void CYUVPlayerDlg::OnBnClickedButtonNext()
 {
     KillTimer(1);
+    m_fPlay = TRUE;
     m_bPlay.SetBitmap(LoadBitmap(AfxGetInstanceHandle(), MAKEINTRESOURCE(IDB_BM_PLAY)));
     m_nCurrentFrame++;
 
@@ -685,6 +677,9 @@ void CYUVPlayerDlg::OnBnClickedButtonFirst()
 void CYUVPlayerDlg::OnBnClickedButtonLast()
 {
     KillTimer(1);
+    m_fPlay = TRUE;
+    m_fEnd = TRUE;
+    m_bPlay.SetBitmap(LoadBitmap(AfxGetInstanceHandle(), MAKEINTRESOURCE(IDB_BM_PLAY)));
     m_nCurrentFrame = m_nTotalFrame;
     this->Read(m_nCurrentFrame);
     this->Show();
@@ -877,13 +872,21 @@ void CYUVPlayerDlg::Malloc()
 
 void CYUVPlayerDlg::Read(INT nCurrentFrame)
 {
+    // 防止越界
     if (m_nCurrentFrame > m_nTotalFrame)
     {
-        m_fEnd = TRUE;
-        m_bStop.EnableWindow(FALSE);
-        m_bPlay.SetBitmap(LoadBitmap(AfxGetInstanceHandle(), MAKEINTRESOURCE(IDB_BM_PLAY)));
-        KillTimer(1);
-        return;
+        if (m_fLoop)
+        {
+            m_nCurrentFrame = 1;
+        }
+        else
+        {
+            m_fEnd = TRUE;
+            m_bStop.EnableWindow(FALSE);
+            m_bPlay.SetBitmap(LoadBitmap(AfxGetInstanceHandle(), MAKEINTRESOURCE(IDB_BM_PLAY)));
+            KillTimer(1);
+            return;
+        }
     }
     this->ShowFrameCount(nCurrentFrame); // 读一帧时，顺便显示出当前帧
     m_cFile.Seek(m_iYuvSize * (nCurrentFrame - 1), SEEK_SET);
@@ -894,7 +897,7 @@ void CYUVPlayerDlg::Show()
 {
     // 先添加BMP头
     m_bmHeader.bfType = 'MB';
-    m_bmHeader.bfSize = m_iRgbSize + sizeof(BITMAPFILEHEADER) + sizeof(BITMAPINFOHEADER);
+    m_bmHeader.bfSize = m_iRgbSize;// + sizeof(BITMAPFILEHEADER) + sizeof(BITMAPINFOHEADER);
     m_bmHeader.bfReserved1 = 0;
     m_bmHeader.bfReserved2 = 0;
     m_bmHeader.bfOffBits = sizeof(BITMAPFILEHEADER) + sizeof(BITMAPINFOHEADER);
@@ -905,7 +908,7 @@ void CYUVPlayerDlg::Show()
     m_bmInfo.bmiHeader.biPlanes = 1;
     m_bmInfo.bmiHeader.biBitCount = 24;
     m_bmInfo.bmiHeader.biCompression = BI_RGB;
-    m_bmInfo.bmiHeader.biSizeImage   = m_iRgbSize;
+    m_bmInfo.bmiHeader.biSizeImage   = m_iRgbSize - 54;
     m_bmInfo.bmiHeader.biXPelsPerMeter = 0;
     m_bmInfo.bmiHeader.biYPelsPerMeter = 0;
     m_bmInfo.bmiHeader.biClrUsed = 0;

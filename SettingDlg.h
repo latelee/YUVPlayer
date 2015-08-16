@@ -34,6 +34,8 @@ public:
 
     void ParseFilename(const char* pFilename);
 
+    void UpdateRes();
+
 private:
     CYUVPlayerDlg *m_pParentWnd; // 窗口参数传递
     CString m_strAddedSize;   // 用户自定义的分辨率(含系统已有的)

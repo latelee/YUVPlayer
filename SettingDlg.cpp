@@ -9,7 +9,7 @@
 
 #define ARRAY_ELEMS(a) (sizeof(a) / sizeof((a)[0]))
 
-// 从字符串中拿到x前后的数字
+// 从文件名称解析分辨率及YUV格式
 void find_resolution(char* filename, int& fmt_idx, int& width, int& height)
 {
 #define str_debug
@@ -204,7 +204,7 @@ CSettingDlg::CSettingDlg(CWnd* pParent /*=NULL*/)
     m_nHeight = 144;
     m_nFps = 30;
     m_nFpsIndex = 7; // index 7 == 30
-    m_nYuvFormat = 1;   // tmpe yuv420
+    m_nYuvFormat = 1;   // default yuv420
     m_fLoop = FALSE;
 }
 
@@ -215,8 +215,6 @@ CSettingDlg::~CSettingDlg()
 void CSettingDlg::DoDataExchange(CDataExchange* pDX)
 {
     CDialogEx::DoDataExchange(pDX);
-    //  DDX_Text(pDX, IDC_E_WIDTH, m_nWidth);
-    //  DDX_Control(pDX, IDC_CB_YUV_FMT, m_cbResolution);
     DDX_Control(pDX, IDC_CB_FPS, m_cbFps);
     DDX_Control(pDX, IDC_CB_YUV_FMT, m_cbYuvFormat);
     DDX_Control(pDX, IDC_CB_SIZE, m_cbResolution);
@@ -271,15 +269,17 @@ void CSettingDlg::GetRegistration(CString& strSize, int& width, int& height, int
     HKEY hKey;
     DWORD dwType = 0;
     DWORD dwLen = 1024; // 此处值是否适合？CString类型如何给定长度？
-    //BYTE szBuffer[1024] = {0};
-
+    BYTE szBuffer[1024] = {0};
     RegOpenKeyEx(HKEY_CURRENT_USER,  _T("Software\\YUVPlayer-latelee.org\\Setting"), 0, KEY_QUERY_VALUE, &hKey);
-    RegQueryValueEx(hKey, _T("AddedSize"), NULL, &dwType, (BYTE*)(strSize.GetBuffer()), &dwLen);
+    RegQueryValueEx(hKey, _T("AddedSize"), NULL, &dwType, szBuffer, &dwLen);
+
     RegQueryValueEx(hKey, _T("FrameWidth"), NULL, &dwType, (BYTE*)&width, &dwLen);
     RegQueryValueEx(hKey, _T("FrameHeight"), NULL, &dwType, (BYTE*)&height, &dwLen);
     RegQueryValueEx(hKey, _T("FrameRate"), NULL, &dwType, (BYTE*)&fpsidx, &dwLen);
     RegQueryValueEx(hKey, _T("CurrentPixelFormat"), NULL, &dwType, (BYTE*)&fmt, &dwLen);
     RegQueryValueEx(hKey, _T("Loop"), NULL, &dwType, (BYTE*)&loop, &dwLen);
+
+    strSize.Format(_T("%s"), szBuffer);
 
     RegCloseKey(hKey);
 }
@@ -293,7 +293,7 @@ BOOL CSettingDlg::OnInitDialog()
     // 
     CString strTemp;
 
-#if 0
+#if 01
     // default
     if (!ExistRegistration())
     //if (1)
@@ -309,7 +309,7 @@ BOOL CSettingDlg::OnInitDialog()
     strMsg.Format(_T("%s %d %d %d %d %d"), m_strAddedSize, m_nWidth, m_nHeight, m_nFpsIndex, m_nYuvFormat, m_fLoop);
     MessageBox(strMsg);
 #endif
-
+#if 01
     int pos = 0;  
     strTemp = m_strAddedSize.Tokenize(_T(";"), pos);
     m_strArrAddedSize.Add(strTemp);
@@ -329,7 +329,40 @@ BOOL CSettingDlg::OnInitDialog()
         if (width == m_nWidth && height == m_nHeight)
             nResolutionIdx = i;
     }
+#if 0
+    for (int i = 0; i < m_strArrAddedSize.GetCount(); i++)
+    {
+        strTemp += m_strArrAddedSize[i].GetBuffer();
+        i++;
+    }
+    MessageBox(strTemp);
+    return FALSE;
+#endif
+#endif
+#if 0
+    int pos = 0;
+    int i = 0;
+    int width = 0;
+    int height = 0;
+    strTemp = m_strAddedSize.Tokenize(_T(";"), pos);
+    swscanf_s(strTemp, _T("%dx%d"), &m_cArrResolution[i].width, &m_cArrResolution[i].height);
+    while (strTemp != _T(""))
+    {
+        i++;
+        strTemp = m_strAddedSize.Tokenize(_T(";"), pos);
+        swscanf_s(strTemp, _T("%dx%d"), &m_cArrResolution[i].width, &m_cArrResolution[i].height);
+    }
 
+    int nResolutionIdx = -1;
+    for (i = 0; i < MAX_RES && m_cArrResolution[i].width!=-1; i++)
+    {
+        m_nResIndex = i;
+        strTemp.Format(_T("%dx%d"), m_cArrResolution[i].width, m_cArrResolution[i].height);
+        m_cbResolution.AddString(strTemp);
+        if (m_cArrResolution[i].width == m_nWidth && m_cArrResolution[i].height == m_nHeight)
+            nResolutionIdx = i;
+    }
+#endif
     m_cbYuvFormat.SetCurSel(m_nYuvFormat);
     m_cbFps.SetCurSel(m_nFpsIndex);
     m_cbResolution.SetCurSel(nResolutionIdx);
@@ -341,7 +374,7 @@ BOOL CSettingDlg::OnInitDialog()
 
     GetDlgItem(IDC_APPLY)->EnableWindow(FALSE);
 
-    
+    m_cbResolution.Clear();
     UpdateData(FALSE);
     return TRUE;  // return TRUE unless you set the focus to a control
     // 异常: OCX 属性页应返回 FALSE
@@ -352,6 +385,9 @@ void CSettingDlg::OnBnClickedApply()
 {
     // TODO: 在此添加控件通知处理程序代码
     UpdateData();
+
+    UpdateRes();
+#if 0
     int nResolutionIdx = -1;
     for (int i = 0; i < m_strArrAddedSize.GetCount()-1; i++)
     {
@@ -361,8 +397,18 @@ void CSettingDlg::OnBnClickedApply()
         if (width == m_nWidth && height == m_nHeight)
             nResolutionIdx = i;
     }
-
-    m_cbResolution.SetCurSel(nResolutionIdx);
+#endif
+#if 0
+    int nResolutionIdx = -1;
+    CString strTemp;
+    for (int i = 0; i < MAX_RES && m_cArrResolution[i].width!=-1; i++)
+    {
+        strTemp.Format(_T("%dx%d"), m_cArrResolution[i].width, m_cArrResolution[i].height);
+        if (m_cArrResolution[i].width == m_nWidth && m_cArrResolution[i].height == m_nHeight)
+            nResolutionIdx = i;
+    }
+#endif
+    //m_cbResolution.SetCurSel(nResolutionIdx);
 
     m_pParentWnd->SetParentParameters(m_nWidth, m_nHeight, m_nFps, m_nYuvFormat, m_fLoop);
     SetRegistration(m_strAddedSize, m_nWidth,m_nHeight, m_nFpsIndex, m_nYuvFormat, m_fLoop);
@@ -438,15 +484,74 @@ void CSettingDlg::OnChangeEHeight()
 void CSettingDlg::OnBnClickedBtAdd()
 {
     CString strTemp;
+    CString strAddedSize;
+
     UpdateData();
-    strTemp.Format(_T(";%dx%d"), m_nWidth, m_nHeight);
-    m_strAddedSize += strTemp;
+
+    for (int i = 0; i < m_strArrAddedSize.GetCount(); i++)
+    {
+        int width = 0;
+        int height = 0;
+        swscanf_s(m_strArrAddedSize[i].GetBuffer(), _T("%dx%d"), &width, &height);
+        if (width == m_nWidth && height == m_nHeight)
+            return;
+    }
+    strTemp.Format(_T("%dx%d"), m_nWidth, m_nHeight);
+
+    m_strArrAddedSize.Add(strTemp);
+
+    m_strAddedSize.Empty();
+
+#if 0
+    for (int i = 0; i < m_strArrAddedSize.GetCount(); i++)
+    {
+        strTemp += m_strArrAddedSize[i].GetBuffer();
+        i++;
+    }
+    MessageBox(strTemp);
+    return;
+#endif
+    for (int i = 0; i < m_strArrAddedSize.GetCount() ; i++)
+    {
+        strTemp.Format(_T("%s;"), m_strArrAddedSize[i].GetBuffer());
+        if (strTemp.CompareNoCase(_T(";")) == 0) continue;
+        m_strAddedSize += strTemp;
+    }
+    //MessageBox(m_strAddedSize);
+    UpdateRes();
+    //return;
+    SetRegistration(m_strAddedSize, m_nWidth,m_nHeight, m_nFpsIndex, m_nYuvFormat, m_fLoop);
+
 }
 
 // 在注册表删除一种分辨率
 void CSettingDlg::OnBnClickedBtDel()
 {
+    UpdateData();
+    wchar_t szRes[32] = {0};
+    m_cbResolution.GetWindowText(szRes,32);
 
+    //MessageBox(szRes);
+
+    for (int i = 0; i < m_strArrAddedSize.GetCount(); i++)
+    {
+        if (!m_strArrAddedSize[i].CompareNoCase(szRes))
+        {
+            m_strArrAddedSize.RemoveAt(i);
+        }
+    }
+
+    CString strTemp;
+    m_strAddedSize.Empty();
+    for (int i = 0; i < m_strArrAddedSize.GetCount() ; i++)
+    {
+        strTemp.Format(_T("%s;"), m_strArrAddedSize[i].GetBuffer());
+        if (strTemp.CompareNoCase(_T(";")) == 0) continue;
+        m_strAddedSize += strTemp;
+    }
+    //MessageBox(m_strAddedSize);
+    UpdateRes();
+    SetRegistration(m_strAddedSize, m_nWidth,m_nHeight, m_nFpsIndex, m_nYuvFormat, m_fLoop);
 }
 
 void CSettingDlg::ParseFilename(const char* pFilename)
@@ -468,16 +573,26 @@ void CSettingDlg::ParseFilename(const char* pFilename)
         m_nHeight = nHeight;
     }
     // 更新控件
+    UpdateRes();
+    m_cbYuvFormat.SetCurSel(m_nYuvFormat);
+    UpdateData(FALSE);
+}
+
+void CSettingDlg::UpdateRes()
+{
     int nResolutionIdx = -1;
-    for (int i = 0; i < m_strArrAddedSize.GetCount()-1; i++)
+    m_cbResolution.Clear();
+    UpdateData(TRUE);
+
+    for (int i = 0; i < m_strArrAddedSize.GetCount(); i++)
     {
         int width = 0;
         int height = 0;
         swscanf_s(m_strArrAddedSize[i].GetBuffer(), _T("%dx%d"), &width, &height);
+        //m_cbResolution.AddString(m_strArrAddedSize[i]);
         if (width == m_nWidth && height == m_nHeight)
             nResolutionIdx = i;
     }
+
     m_cbResolution.SetCurSel(nResolutionIdx);
-    m_cbYuvFormat.SetCurSel(m_nYuvFormat);
-    UpdateData(FALSE);
 }

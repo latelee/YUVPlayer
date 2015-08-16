@@ -238,7 +238,7 @@ BOOL CYUVPlayerDlg::OnInitDialog()
         m_pSettingDlg->SetParametersToParentWnd(m_nWidth, m_nHeight, m_nFps, m_nYuvFormat, m_fLoop);
     }
     
-    // 各类按钮
+    // 各类按钮ID
     m_nStartX[0][0] = IDC_STATIC_FRAMECNT;
     m_nStartX[0][1] = IDC_SLIDER1;
     m_nStartX[0][2] = IDC_BUTTON_OPEN;
@@ -277,13 +277,6 @@ BOOL CYUVPlayerDlg::OnInitDialog()
     m_bSetting.SetBitmap(LoadBitmap(AfxGetInstanceHandle(), MAKEINTRESOURCE(IDB_BM_SETTING)));
 
     m_slProgress.EnableWindow(FALSE);
-
-    // 创建互斥量
-    HANDLE hPlay = NULL;
-    if ((hPlay = OpenMutex(MUTEX_ALL_ACCESS,FALSE,_T("Play"))) == NULL)
-    {
-        hPlay = CreateMutex(NULL, FALSE, _T("Play"));
-    }
 
     m_fInit = TRUE;
     m_fShowBlack = TRUE;
@@ -731,8 +724,6 @@ void CYUVPlayerDlg::OnSize(UINT nType, int cx, int cy)
     pWnd = GetDlgItem(m_nStartX[0][1]);
     if (pWnd)
     {
-        //pWnd->MoveWindow(startx+0, cy-26-26, cx, cy-26-20-21);
-        //pWnd->Invalidate();
         pWnd->SetWindowPos( NULL,startx+m_nStartX[1][1],cy-26-26-4,cx,26,SWP_NOZORDER);
     }
     // 水平位置相同的按钮
@@ -858,12 +849,12 @@ void CYUVPlayerDlg::Malloc()
         m_pbRgbData = NULL;
     }
 
-    m_iRgbSize = m_nWidth * m_nHeight * 3 + 54;
+    m_iRgbSize = m_nWidth * m_nHeight * 3 + 54; // 这里申请BMP图片的空间，方便保存
 
     m_pbYuvData = new char[m_iYuvSize];
     m_pbRgbData  = new char[m_iRgbSize];
 
-    m_nTotalFrame = (UINT)(m_cFile.GetLength() / m_iYuvSize);
+    m_nTotalFrame = (UINT)(m_cFile.GetLength() / m_iYuvSize); // 计算总帧数
     m_slProgress.SetRange(1, m_nTotalFrame);
     m_slProgress.SetPos(m_nCurrentFrame);
 
@@ -919,15 +910,15 @@ void CYUVPlayerDlg::Show()
 
     // 再转换格式
     yuv_to_rgb24((YUV_TYPE)m_nYuvFormat, (unsigned char *)m_pbYuvData, (unsigned char *)m_pbRgbData+54, m_nWidth, m_nHeight);
-    // BMP是BGR格式的，rgb->bgr
+    // BMP是BGR格式的，要转换 rgb->bgr
     swargb((BYTE*)m_pbRgbData+54, m_iRgbSize-54);
     // 显示
     ShowPicture((BYTE *)m_pbRgbData, m_iRgbSize);
 }
 
+// 显示当前帧/总帧数
 void CYUVPlayerDlg::ShowFrameCount(int nCurrentFrame)
 {
-    // 显示当前帧/总帧数
     CString strTemp;
     strTemp.Format(_T("%d/%d"), nCurrentFrame, m_nTotalFrame);
     GetDlgItem(IDC_STATIC_FRAMECNT)->SetWindowText(strTemp);
@@ -966,11 +957,7 @@ inline void RenderBitmap(CWnd *pWnd, Bitmap* pbmp)
     {
         Rect rc( rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top );
 
-        Status st = grf.DrawImage(pbmp, rc);
-        if (st != Ok)
-        {
-            //OutputDebugString("DRAWIMAGE ERROR\n");
-        }
+        grf.DrawImage(pbmp, rc);
     }
 }
 

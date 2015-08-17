@@ -289,8 +289,6 @@ BOOL CSettingDlg::OnInitDialog()
 {
     CDialogEx::OnInitDialog();
 
-    // TODO:  使用注册表里的值
-    // 
     CString strTemp;
 
 #if 01
@@ -309,7 +307,7 @@ BOOL CSettingDlg::OnInitDialog()
     strMsg.Format(_T("%s %d %d %d %d %d"), m_strAddedSize, m_nWidth, m_nHeight, m_nFpsIndex, m_nYuvFormat, m_fLoop);
     MessageBox(strMsg);
 #endif
-#if 01
+
     int pos = 0;  
     strTemp = m_strAddedSize.Tokenize(_T(";"), pos);
     m_strArrAddedSize.Add(strTemp);
@@ -319,8 +317,11 @@ BOOL CSettingDlg::OnInitDialog()
         m_strArrAddedSize.Add(strTemp);
     }
 
+    // 不知为何，最后一个是空的，这里删除，否则后面再添加时会多一个空字符串
+    m_strArrAddedSize.RemoveAt(m_strArrAddedSize.GetCount()-1);
+
     int nResolutionIdx = -1;
-    for (int i = 0; i < m_strArrAddedSize.GetCount()-1; i++)
+    for (int i = 0; i < m_strArrAddedSize.GetCount(); i++)
     {
         m_cbResolution.AddString(m_strArrAddedSize[i]);
         int width = 0;
@@ -329,46 +330,12 @@ BOOL CSettingDlg::OnInitDialog()
         if (width == m_nWidth && height == m_nHeight)
             nResolutionIdx = i;
     }
-#if 0
-    for (int i = 0; i < m_strArrAddedSize.GetCount(); i++)
-    {
-        strTemp += m_strArrAddedSize[i].GetBuffer();
-        i++;
-    }
-    MessageBox(strTemp);
-    return FALSE;
-#endif
-#endif
-#if 0
-    int pos = 0;
-    int i = 0;
-    int width = 0;
-    int height = 0;
-    strTemp = m_strAddedSize.Tokenize(_T(";"), pos);
-    swscanf_s(strTemp, _T("%dx%d"), &m_cArrResolution[i].width, &m_cArrResolution[i].height);
-    while (strTemp != _T(""))
-    {
-        i++;
-        strTemp = m_strAddedSize.Tokenize(_T(";"), pos);
-        swscanf_s(strTemp, _T("%dx%d"), &m_cArrResolution[i].width, &m_cArrResolution[i].height);
-    }
 
-    int nResolutionIdx = -1;
-    for (i = 0; i < MAX_RES && m_cArrResolution[i].width!=-1; i++)
-    {
-        m_nResIndex = i;
-        strTemp.Format(_T("%dx%d"), m_cArrResolution[i].width, m_cArrResolution[i].height);
-        m_cbResolution.AddString(strTemp);
-        if (m_cArrResolution[i].width == m_nWidth && m_cArrResolution[i].height == m_nHeight)
-            nResolutionIdx = i;
-    }
-#endif
     m_cbYuvFormat.SetCurSel(m_nYuvFormat);
     m_cbFps.SetCurSel(m_nFpsIndex);
     m_cbResolution.SetCurSel(nResolutionIdx);
     m_nYuvFormat = m_cbYuvFormat.GetCurSel();
     m_cbResolution.GetWindowText(strTemp);
-    //swscanf_s(strTemp.GetBuffer(), _T("%dx%d"), &m_nWidth, &m_nHeight);
     m_cbFps.GetWindowText(strTemp);
     swscanf_s(strTemp.GetBuffer(), _T("%d"), &m_nFps);
 
@@ -377,7 +344,6 @@ BOOL CSettingDlg::OnInitDialog()
     m_cbResolution.Clear();
     UpdateData(FALSE);
     return TRUE;  // return TRUE unless you set the focus to a control
-    // 异常: OCX 属性页应返回 FALSE
 }
 
 // 应用，不要关闭窗口
@@ -387,28 +353,6 @@ void CSettingDlg::OnBnClickedApply()
     UpdateData();
 
     UpdateRes();
-#if 0
-    int nResolutionIdx = -1;
-    for (int i = 0; i < m_strArrAddedSize.GetCount()-1; i++)
-    {
-        int width = 0;
-        int height = 0;
-        swscanf_s(m_strArrAddedSize[i].GetBuffer(), _T("%dx%d"), &width, &height);
-        if (width == m_nWidth && height == m_nHeight)
-            nResolutionIdx = i;
-    }
-#endif
-#if 0
-    int nResolutionIdx = -1;
-    CString strTemp;
-    for (int i = 0; i < MAX_RES && m_cArrResolution[i].width!=-1; i++)
-    {
-        strTemp.Format(_T("%dx%d"), m_cArrResolution[i].width, m_cArrResolution[i].height);
-        if (m_cArrResolution[i].width == m_nWidth && m_cArrResolution[i].height == m_nHeight)
-            nResolutionIdx = i;
-    }
-#endif
-    //m_cbResolution.SetCurSel(nResolutionIdx);
 
     m_pParentWnd->SetParentParameters(m_nWidth, m_nHeight, m_nFps, m_nYuvFormat, m_fLoop);
     SetRegistration(m_strAddedSize, m_nWidth,m_nHeight, m_nFpsIndex, m_nYuvFormat, m_fLoop);
@@ -498,28 +442,25 @@ void CSettingDlg::OnBnClickedBtAdd()
     }
     strTemp.Format(_T("%dx%d"), m_nWidth, m_nHeight);
 
+    // 尾部添加
     m_strArrAddedSize.Add(strTemp);
 
-    m_strAddedSize.Empty();
-
-#if 0
+    // 先清空
+    m_strAddedSize.Empty(); 
+    m_cbResolution.ResetContent();
+    // 再添加
     for (int i = 0; i < m_strArrAddedSize.GetCount(); i++)
     {
-        strTemp += m_strArrAddedSize[i].GetBuffer();
-        i++;
-    }
-    MessageBox(strTemp);
-    return;
-#endif
-    for (int i = 0; i < m_strArrAddedSize.GetCount() ; i++)
-    {
+        m_cbResolution.AddString(m_strArrAddedSize[i].GetBuffer());
         strTemp.Format(_T("%s;"), m_strArrAddedSize[i].GetBuffer());
-        if (strTemp.CompareNoCase(_T(";")) == 0) continue;
         m_strAddedSize += strTemp;
     }
-    //MessageBox(m_strAddedSize);
     UpdateRes();
     //return;
+    //MessageBox(m_strAddedSize);
+    
+    return;
+    // todo 在Add时，到底要不要写注册表？还是等到apply时才做？
     SetRegistration(m_strAddedSize, m_nWidth,m_nHeight, m_nFpsIndex, m_nYuvFormat, m_fLoop);
 
 }
@@ -531,8 +472,6 @@ void CSettingDlg::OnBnClickedBtDel()
     wchar_t szRes[32] = {0};
     m_cbResolution.GetWindowText(szRes,32);
 
-    //MessageBox(szRes);
-
     for (int i = 0; i < m_strArrAddedSize.GetCount(); i++)
     {
         if (!m_strArrAddedSize[i].CompareNoCase(szRes))
@@ -543,13 +482,14 @@ void CSettingDlg::OnBnClickedBtDel()
 
     CString strTemp;
     m_strAddedSize.Empty();
+    m_cbResolution.ResetContent();
     for (int i = 0; i < m_strArrAddedSize.GetCount() ; i++)
     {
+        m_cbResolution.AddString(m_strArrAddedSize[i].GetBuffer());
         strTemp.Format(_T("%s;"), m_strArrAddedSize[i].GetBuffer());
-        if (strTemp.CompareNoCase(_T(";")) == 0) continue;
         m_strAddedSize += strTemp;
     }
-    //MessageBox(m_strAddedSize);
+
     UpdateRes();
     SetRegistration(m_strAddedSize, m_nWidth,m_nHeight, m_nFpsIndex, m_nYuvFormat, m_fLoop);
 }
@@ -581,15 +521,11 @@ void CSettingDlg::ParseFilename(const char* pFilename)
 void CSettingDlg::UpdateRes()
 {
     int nResolutionIdx = -1;
-    m_cbResolution.Clear();
-    UpdateData(TRUE);
-
     for (int i = 0; i < m_strArrAddedSize.GetCount(); i++)
     {
         int width = 0;
         int height = 0;
         swscanf_s(m_strArrAddedSize[i].GetBuffer(), _T("%dx%d"), &width, &height);
-        //m_cbResolution.AddString(m_strArrAddedSize[i]);
         if (width == m_nWidth && height == m_nHeight)
             nResolutionIdx = i;
     }

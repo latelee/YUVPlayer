@@ -433,7 +433,7 @@ void CYUVPlayerDlg::OnPlayingStop()
 */
 void CYUVPlayerDlg::OnHelpHelp()
 {
-    wchar_t* help = _T("YUV播放器说明：\r\n1、支持常见YUV格式文件播放；\r\n2、支持保存YUV或BMP文件；\r\n3、直接拖拽文件到播放器或通过菜单打开文件；\r\n\r\n\r\nTrick\r\n程序可自动通过文件名解析YUV格式及宽高，文件名称需要有YUV格式字符串及分辨率。YUV格式参考设置对话框除Y以外所有的格式。分辨率可用qcif、cif、720p、1080p或直接用宽x高，示例：foo_yuv422_176x144.yuv。");
+    wchar_t* help = _T("YUV播放器说明：\r\n1、支持常见YUV格式文件播放；\r\n2、支持保存YUV或BMP文件；\r\n3、直接拖拽文件到播放器或通过菜单打开文件；\r\n4、设置框中只有点击Apply或OK方可保存；\r\n\r\n\r\nTrick\r\n程序可自动通过文件名解析YUV格式及宽高，文件名称需要有YUV格式字符串及分辨率。YUV格式参考设置对话框除Y以外所有的格式。分辨率可用qcif、cif、720p、1080p或直接用宽x高，示例：foo_yuv422_176x144.yuv。");
     MessageBox((LPCTSTR)help);
 }
 

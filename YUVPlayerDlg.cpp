@@ -875,6 +875,7 @@ void CYUVPlayerDlg::Read(INT nCurrentFrame)
             m_bStop.EnableWindow(FALSE);
             m_bPlay.SetBitmap(LoadBitmap(AfxGetInstanceHandle(), MAKEINTRESOURCE(IDB_BM_PLAY)));
             KillTimer(1);
+            m_nCurrentFrame = m_nTotalFrame;
             return;
         }
     }

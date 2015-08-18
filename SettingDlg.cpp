@@ -224,7 +224,7 @@ CSettingDlg::CSettingDlg(CWnd* pParent /*=NULL*/)
 	: CDialogEx(CSettingDlg::IDD, pParent)
 {
     m_pParentWnd = NULL;
-    m_strAddedSize = _T("160x120;176x144;320x240;352x288;640x480;704x576;720x480;1280x720;1600x1200;1920x1080;3072x2048;3488x2024");
+    m_strAddedSize = _T("160x120;176x144;320x240;352x288;640x480;704x576;720x480;1280x720;1600x1200;1920x1080");
     m_nWidth = 176;
     m_nHeight = 144;
     m_nFps = 30;
@@ -316,22 +316,13 @@ BOOL CSettingDlg::OnInitDialog()
 
     CString strTemp;
 
-#if 01
     // default
     if (!ExistRegistration())
-    //if (1)
     {
         SetRegistration(m_strAddedSize, m_nWidth,m_nHeight, m_nFpsIndex, m_nYuvFormat, m_fLoop);
     }
     // read
     GetRegistration(m_strAddedSize, m_nWidth, m_nHeight, m_nFpsIndex, m_nYuvFormat, m_fLoop);
-#endif
-#if 0
-    // debug
-    CString strMsg;
-    strMsg.Format(_T("%s %d %d %d %d %d"), m_strAddedSize, m_nWidth, m_nHeight, m_nFpsIndex, m_nYuvFormat, m_fLoop);
-    MessageBox(strMsg);
-#endif
 
     int pos = 0;  
     strTemp = m_strAddedSize.Tokenize(_T(";"), pos);

@@ -117,7 +117,7 @@ CYUVPlayerDlg::CYUVPlayerDlg(CWnd* pParent /*=NULL*/)
     m_fLoop = FALSE;
 
     m_pbYuvData = NULL;
-    m_pbRgbData = NULL;
+    m_pbBmpData = NULL;
     m_pWinThread = NULL;
 
     m_nTotalFrame = m_nCurrentFrame = 0;
@@ -137,10 +137,10 @@ CYUVPlayerDlg::~CYUVPlayerDlg()
         m_pbYuvData = NULL;
     }
 
-    if (m_pbRgbData != NULL)
+    if (m_pbBmpData != NULL)
     {
-        delete[] m_pbRgbData;
-        m_pbRgbData = NULL;
+        delete[] m_pbBmpData;
+        m_pbBmpData = NULL;
     }
 }
 
@@ -303,7 +303,6 @@ void CYUVPlayerDlg::OnSysCommand(UINT nID, LPARAM lParam)
 
 void CYUVPlayerDlg::OnPaint()
 {
-#if 01
     //picture控件背景色为黑色
     if (m_fShowBlack)
     {
@@ -314,9 +313,8 @@ void CYUVPlayerDlg::OnPaint()
         cDc->FillSolidRect(rtTop.left, rtTop.top, rtTop.Width(), rtTop.Height(),RGB(0,0,0));
         Invalidate(FALSE);
     }
-#endif
 
-    ShowPicture((BYTE *)m_pbRgbData, m_iRgbSize);
+    ShowPicture((BYTE *)m_pbBmpData, m_iBmpSize);
 
 	if (IsIconic())
 	{
@@ -471,10 +469,10 @@ void CYUVPlayerDlg::OnRExit()
         m_pbYuvData = NULL;
     }
 
-    if (m_pbRgbData != NULL)
+    if (m_pbBmpData != NULL)
     {
-        delete[] m_pbRgbData;
-        m_pbRgbData = NULL;
+        delete[] m_pbBmpData;
+        m_pbBmpData = NULL;
     }
     OnCancel();
 }
@@ -553,8 +551,8 @@ void CYUVPlayerDlg::OnBnClickedButtonSave()
     if (!strTemp.Compare(_T("bmp")))
     {
         pExt = _T("bmp");
-        pData = m_pbRgbData;
-        nSize = m_iRgbSize;
+        pData = m_pbBmpData;
+        nSize = m_iBmpSize;
     }
 
     cFile.Open(fileDlg.GetPathName(), CFile::modeWrite|CFile::modeCreate);
@@ -843,16 +841,16 @@ void CYUVPlayerDlg::Malloc()
     }
 
     // 此处有问题，更改YUV格式后会挂掉
-    if (m_pbRgbData != NULL)
+    if (m_pbBmpData != NULL)
     {
-        delete[] m_pbRgbData;
-        m_pbRgbData = NULL;
+        delete[] m_pbBmpData;
+        m_pbBmpData = NULL;
     }
 
-    m_iRgbSize = m_nWidth * m_nHeight * 3 + 54; // 这里申请BMP图片的空间，方便保存
+    m_iBmpSize = m_nWidth * m_nHeight * 3 + 54; // 这里申请BMP图片的空间，方便保存
 
     m_pbYuvData = new char[m_iYuvSize];
-    m_pbRgbData  = new char[m_iRgbSize];
+    m_pbBmpData  = new char[m_iBmpSize];
 
     m_nTotalFrame = (UINT)(m_cFile.GetLength() / m_iYuvSize); // 计算总帧数
     m_slProgress.SetRange(1, m_nTotalFrame);
@@ -888,7 +886,7 @@ void CYUVPlayerDlg::Show()
 {
     // 先添加BMP头
     m_bmHeader.bfType = 'MB';
-    m_bmHeader.bfSize = m_iRgbSize;// + sizeof(BITMAPFILEHEADER) + sizeof(BITMAPINFOHEADER);
+    m_bmHeader.bfSize = m_iBmpSize;// + sizeof(BITMAPFILEHEADER) + sizeof(BITMAPINFOHEADER);
     m_bmHeader.bfReserved1 = 0;
     m_bmHeader.bfReserved2 = 0;
     m_bmHeader.bfOffBits = sizeof(BITMAPFILEHEADER) + sizeof(BITMAPINFOHEADER);
@@ -899,21 +897,22 @@ void CYUVPlayerDlg::Show()
     m_bmInfo.bmiHeader.biPlanes = 1;
     m_bmInfo.bmiHeader.biBitCount = 24;
     m_bmInfo.bmiHeader.biCompression = BI_RGB;
-    m_bmInfo.bmiHeader.biSizeImage   = m_iRgbSize - 54;
+    m_bmInfo.bmiHeader.biSizeImage   = m_iBmpSize - 54;
     m_bmInfo.bmiHeader.biXPelsPerMeter = 0;
     m_bmInfo.bmiHeader.biYPelsPerMeter = 0;
     m_bmInfo.bmiHeader.biClrUsed = 0;
     m_bmInfo.bmiHeader.biClrImportant = 0;
 
-    memcpy(m_pbRgbData, &m_bmHeader, sizeof(BITMAPFILEHEADER));
-    memcpy(m_pbRgbData+sizeof(BITMAPFILEHEADER), &m_bmInfo, sizeof(BITMAPINFOHEADER));
+    memcpy(m_pbBmpData, &m_bmHeader, sizeof(BITMAPFILEHEADER));
+    memcpy(m_pbBmpData+sizeof(BITMAPFILEHEADER), &m_bmInfo, sizeof(BITMAPINFOHEADER));
 
     // 再转换格式
-    yuv_to_rgb24((YUV_TYPE)m_nYuvFormat, (unsigned char *)m_pbYuvData, (unsigned char *)m_pbRgbData+54, m_nWidth, m_nHeight);
+    yuv_to_rgb24((YUV_TYPE)m_nYuvFormat, (unsigned char *)m_pbYuvData, (unsigned char *)m_pbBmpData+54, m_nWidth, m_nHeight);
+    
     // BMP是BGR格式的，要转换 rgb->bgr
-    swargb((BYTE*)m_pbRgbData+54, m_iRgbSize-54);
+    swaprgb((BYTE*)(m_pbBmpData+54), m_iBmpSize-54);
     // 显示
-    ShowPicture((BYTE *)m_pbRgbData, m_iRgbSize);
+   ShowPicture((BYTE *)m_pbBmpData, m_iBmpSize);
 }
 
 // 显示当前帧/总帧数
@@ -999,7 +998,7 @@ void CYUVPlayerDlg::SetParentParameters(int width, int height, int fps, int fmt,
     ShowOpenedFrame();
 }
 
-
+// 滚动条处理函数
 void CYUVPlayerDlg::OnHScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar)
 {
     //CSliderCtrl  *pSlidCtrl=(CSliderCtrl*)GetDlgItem(IDC_SLIDER1);

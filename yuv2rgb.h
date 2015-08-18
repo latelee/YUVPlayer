@@ -179,7 +179,7 @@ void yu_to_yv(YUV_TYPE type, unsigned char* yu, unsigned char* yv, int width, in
 void yv_to_yu(YUV_TYPE type, unsigned char* yuv420sp, unsigned char* yuv420p, int width, int height);
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-void swargb(unsigned char* rgb, int len);
+void swaprgb(unsigned char* rgb, int len);
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 void yuv420_to_rgb24_1(unsigned char* yuv420, unsigned char* rgb, int width, int height);

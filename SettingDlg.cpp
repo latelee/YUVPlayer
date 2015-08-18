@@ -155,7 +155,7 @@ void find_resolution(char* filename, int& fmt_idx, int& width, int& height)
     len = len - pos + 1;
     j = pos;
     // 找到'x'前面的数字
-    for (i = 0; i < len; i++)
+    for (i = 0; i < len && j > 0; i++)
     {
         str_debug("pos: %d %c\n", j, p[j]);
         if (!isdigit(p[--j]))
@@ -191,6 +191,31 @@ void find_resolution(char* filename, int& fmt_idx, int& width, int& height)
     str_debug("\n");
 }
 
+// 根据宽高排序
+void BubbleSort(CStringArray &ca)
+{
+    int len = ca.GetCount();
+    int width1 = 0;
+    int height1 = 0;
+    int width2 = 0;
+    int height2 = 0;
+    CString tmp;
+
+    for (int i = 0; i < len; i++)
+    {
+        for (int j = i; j < len; j++)
+        {
+            swscanf_s(ca[i].GetBuffer(), _T("%dx%d"), &width1, &height1);
+            swscanf_s(ca[j].GetBuffer(), _T("%dx%d"), &width2, &height2);
+            if ((width1 > width2) || (width1 == width2 && height1 > height2))
+            {
+                tmp = ca.GetAt(i);
+                ca.SetAt(i, ca.GetAt(j));
+                ca.SetAt(j, tmp);
+            }
+        }
+    }
+}
 // CSettingDlg 对话框
 
 IMPLEMENT_DYNAMIC(CSettingDlg, CDialogEx)
@@ -444,6 +469,9 @@ void CSettingDlg::OnBnClickedBtAdd()
 
     // 尾部添加
     m_strArrAddedSize.Add(strTemp);
+
+    // 排序
+    BubbleSort(m_strArrAddedSize);
 
     // 先清空
     m_strAddedSize.Empty(); 

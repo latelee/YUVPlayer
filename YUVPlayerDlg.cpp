@@ -496,7 +496,7 @@ void CYUVPlayerDlg::OnBnClickedButtonOpen()
 
     // 显示标题
     CString strTemp;
-    strTemp.Format(_T("%s-%s"), m_strPathName.GetBuffer(), APP_NAM);
+    strTemp.Format(_T("%s-%s"), fileDlg.GetFileName(), APP_NAM);
     this->SetWindowText(strTemp);
 
     // 找文件名
@@ -750,15 +750,16 @@ void CYUVPlayerDlg::OnDropFiles(HDROP hDropInfo)
     m_strPathName.Format(_T("%s"), pFilePathName);
     ::DragFinish(hDropInfo);
 
-    // 显示标题
-    CString strTemp;
-    strTemp.Format(_T("%s-%s"), pFilePathName, APP_NAM);
-    this->SetWindowText(strTemp);
-
     // 找文件名
     wchar_t* tmp = wcsrchr(pFilePathName, '\\');
     char szFilename[256] = {0};
     WideCharToMultiByte(CP_ACP, 0, tmp+1, wcslen(tmp+1), szFilename, 256, NULL, NULL);
+    
+    // 显示标题
+    CString strTemp;
+    strTemp.Format(_T("%s-%s"), tmp+1, APP_NAM);
+    this->SetWindowText(strTemp);
+
     free(pFilePathName);
 
     m_pSettingDlg->ParseFilename(szFilename);

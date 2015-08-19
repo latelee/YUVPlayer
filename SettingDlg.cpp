@@ -351,13 +351,11 @@ BOOL CSettingDlg::OnInitDialog()
     m_cbFps.SetCurSel(m_nFpsIndex);
     m_cbResolution.SetCurSel(nResolutionIdx);
     m_nYuvFormat = m_cbYuvFormat.GetCurSel();
-    m_cbResolution.GetWindowText(strTemp);
     m_cbFps.GetWindowText(strTemp);
     swscanf_s(strTemp.GetBuffer(), _T("%d"), &m_nFps);
 
     GetDlgItem(IDC_APPLY)->EnableWindow(FALSE);
 
-    m_cbResolution.Clear();
     UpdateData(FALSE);
     return TRUE;  // return TRUE unless you set the focus to a control
 }
@@ -475,9 +473,7 @@ void CSettingDlg::OnBnClickedBtAdd()
         m_strAddedSize += strTemp;
     }
     UpdateRes();
-    //return;
-    //MessageBox(m_strAddedSize);
-    
+
     return;
     // todo 在Add时，到底要不要写注册表？还是等到apply时才做？
     SetRegistration(m_strAddedSize, m_nWidth,m_nHeight, m_nFpsIndex, m_nYuvFormat, m_fLoop);
@@ -491,13 +487,7 @@ void CSettingDlg::OnBnClickedBtDel()
     wchar_t szRes[32] = {0};
     m_cbResolution.GetWindowText(szRes,32);
 
-    for (int i = 0; i < m_strArrAddedSize.GetCount(); i++)
-    {
-        if (!m_strArrAddedSize[i].CompareNoCase(szRes))
-        {
-            m_strArrAddedSize.RemoveAt(i);
-        }
-    }
+    m_strArrAddedSize.RemoveAt(m_cbResolution.GetCurSel()); // 删除当前下拉框中数据
 
     CString strTemp;
     m_strAddedSize.Empty();

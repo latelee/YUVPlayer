@@ -487,7 +487,9 @@ void CSettingDlg::OnBnClickedBtDel()
     wchar_t szRes[32] = {0};
     m_cbResolution.GetWindowText(szRes,32);
 
-    m_strArrAddedSize.RemoveAt(m_cbResolution.GetCurSel()); // 删除当前下拉框中数据
+    int idx = m_cbResolution.GetCurSel();
+    if (idx == -1) return;
+    m_strArrAddedSize.RemoveAt(idx); // 删除当前下拉框中数据
 
     CString strTemp;
     m_strAddedSize.Empty();

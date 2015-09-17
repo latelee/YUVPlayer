@@ -30,9 +30,9 @@ VS2010 MFC工程，源码有部分参考Yuvviewer代码，界面参考YUV Player Deluxe风格。
 界面
 =======================
 参数设置界面：
-![Setting](https://github.com/latelee/YUVPlayer/blob/master/screenshots/yuvplayer-setting.png?raw=true)
+![Setting](https://github.com/latelee/YUVPlayer/blob/master/screenshots/yuvplayer_setting.png)
 关于界面：
-![About](https://github.com/latelee/YUVPlayer/blob/master/screenshots/yuvplayer-about.png?raw=true)
+![About](https://github.com/latelee/YUVPlayer/blob/master/screenshots/yuvplayer_about.png)
 声明
 =======================
 本程序仅限于学习交流。

@@ -314,7 +314,7 @@ void CYUVPlayerDlg::OnPaint()
         Invalidate(FALSE);
     }
 
-    ShowPicture((BYTE *)m_pbBmpData, m_iBmpSize);
+    ShowPicture((BYTE *)m_pbBmpData, m_nBmpSize);
 
 	if (IsIconic())
 	{
@@ -524,7 +524,7 @@ void CYUVPlayerDlg::OnBnClickedButtonSave()
     wchar_t szExt[16] = {0};
     wchar_t* pExt = _T("yuv");
     char* pData = m_pbYuvData;
-    UINT nSize = m_iYuvSize;
+    UINT nSize = m_nYuvSize;
 
     int nType = 0;
 
@@ -552,7 +552,7 @@ void CYUVPlayerDlg::OnBnClickedButtonSave()
     {
         pExt = _T("bmp");
         pData = m_pbBmpData;
-        nSize = m_iBmpSize;
+        nSize = m_nBmpSize;
     }
 
     cFile.Open(fileDlg.GetPathName(), CFile::modeWrite|CFile::modeCreate);
@@ -814,7 +814,7 @@ void CYUVPlayerDlg::Malloc()
     case FMT_YV12:
     case FMT_NV12:
     case FMT_NV21:
-        m_iYuvSize = m_nWidth * m_nHeight * 3 / 2;
+        m_nYuvSize = m_nWidth * m_nHeight * 3 / 2;
         break;
     case FMT_YUV422:
     case FMT_YV16:
@@ -824,15 +824,18 @@ void CYUVPlayerDlg::Malloc()
     case FMT_VYUY:
     case FMT_NV16:
     case FMT_NV61:
-        m_iYuvSize = m_nWidth * m_nHeight * 2;
+        m_nYuvSize = m_nWidth * m_nHeight * 2;
         break;
     case FMT_YUV444:
-        m_iYuvSize = m_nWidth * m_nHeight * 3;
+    case FMT_RGB24:
+    case FMT_BGR24:
+        m_nYuvSize = m_nWidth * m_nHeight * 3;
         break;
     case FMT_Y:
-        m_iYuvSize = m_nWidth * m_nHeight;
+        m_nYuvSize = m_nWidth * m_nHeight;
         break;
     default:
+        m_nYuvSize = m_nWidth * m_nHeight * 3;
         break;
     }
     if (m_pbYuvData != NULL)
@@ -848,12 +851,12 @@ void CYUVPlayerDlg::Malloc()
         m_pbBmpData = NULL;
     }
 
-    m_iBmpSize = m_nWidth * m_nHeight * 3 + 54; // 这里申请BMP图片的空间，方便保存
+    m_nBmpSize = m_nWidth * m_nHeight * 3 + 54; // 这里申请BMP图片的空间，方便保存
 
-    m_pbYuvData = new char[m_iYuvSize];
-    m_pbBmpData  = new char[m_iBmpSize];
+    m_pbYuvData = new char[m_nYuvSize];
+    m_pbBmpData  = new char[m_nBmpSize];
 
-    m_nTotalFrame = (UINT)(m_cFile.GetLength() / m_iYuvSize); // 计算总帧数
+    m_nTotalFrame = (UINT)(m_cFile.GetLength() / m_nYuvSize); // 计算总帧数
     m_slProgress.SetRange(1, m_nTotalFrame);
     m_slProgress.SetPos(m_nCurrentFrame);
 
@@ -880,15 +883,15 @@ void CYUVPlayerDlg::Read(INT nCurrentFrame)
         }
     }
     this->ShowFrameCount(nCurrentFrame); // 读一帧时，顺便显示出当前帧
-    m_cFile.Seek(m_iYuvSize * (nCurrentFrame - 1), SEEK_SET);
-    m_cFile.Read(m_pbYuvData, m_iYuvSize);
+    m_cFile.Seek(m_nYuvSize * (nCurrentFrame - 1), SEEK_SET);
+    m_cFile.Read(m_pbYuvData, m_nYuvSize);
 }
 
 void CYUVPlayerDlg::Show()
 {
     // 先添加BMP头
     m_bmHeader.bfType = 'MB';
-    m_bmHeader.bfSize = m_iBmpSize;// + sizeof(BITMAPFILEHEADER) + sizeof(BITMAPINFOHEADER);
+    m_bmHeader.bfSize = m_nBmpSize;// + sizeof(BITMAPFILEHEADER) + sizeof(BITMAPINFOHEADER);
     m_bmHeader.bfReserved1 = 0;
     m_bmHeader.bfReserved2 = 0;
     m_bmHeader.bfOffBits = sizeof(BITMAPFILEHEADER) + sizeof(BITMAPINFOHEADER);
@@ -899,7 +902,7 @@ void CYUVPlayerDlg::Show()
     m_bmInfo.bmiHeader.biPlanes = 1;
     m_bmInfo.bmiHeader.biBitCount = 24;
     m_bmInfo.bmiHeader.biCompression = BI_RGB;
-    m_bmInfo.bmiHeader.biSizeImage   = m_iBmpSize - 54;
+    m_bmInfo.bmiHeader.biSizeImage   = m_nBmpSize - 54;
     m_bmInfo.bmiHeader.biXPelsPerMeter = 0;
     m_bmInfo.bmiHeader.biYPelsPerMeter = 0;
     m_bmInfo.bmiHeader.biClrUsed = 0;
@@ -909,12 +912,22 @@ void CYUVPlayerDlg::Show()
     memcpy(m_pbBmpData+sizeof(BITMAPFILEHEADER), &m_bmInfo, sizeof(BITMAPINFOHEADER));
 
     // 再转换格式
-    yuv_to_rgb24((YUV_TYPE)m_nYuvFormat, (unsigned char *)m_pbYuvData, (unsigned char *)m_pbBmpData+54, m_nWidth, m_nHeight);
-    
+    if (m_nYuvFormat == FMT_RGB24 || m_nYuvFormat == FMT_BGR24)
+    {
+        memcpy(m_pbBmpData+54, (unsigned char *)m_pbYuvData, m_nBmpSize - 54);
+    }
+    else
+    {
+        yuv_to_rgb24((YUV_TYPE)m_nYuvFormat, (unsigned char *)m_pbYuvData, (unsigned char *)m_pbBmpData+54, m_nWidth, m_nHeight);
+    }
+
     // BMP是BGR格式的，要转换 rgb->bgr
-    swaprgb((BYTE*)(m_pbBmpData+54), m_iBmpSize-54);
+    if (m_nYuvFormat != FMT_BGR24)
+    {
+        swaprgb((BYTE*)(m_pbBmpData+54), m_nBmpSize-54);
+    }
     // 显示
-   ShowPicture((BYTE *)m_pbBmpData, m_iBmpSize);
+   ShowPicture((BYTE *)m_pbBmpData, m_nBmpSize);
 }
 
 // 显示当前帧/总帧数

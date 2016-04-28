@@ -160,7 +160,7 @@ void CYuvTransform::OnBnClickedBCombine()
 
         Read(m_nCurrentFrame);
 
-        m_cOutputFile.Write(m_pbYuvData, m_iYuvSize);
+        m_cOutputFile.Write(m_pbYuvData, m_nYuvSize);
         strTemp.Format(_T("combining %s."), cfile.name);
         m_csInfo.SetWindowText(strTemp);
         handle_next = _wfindnext(handle, &cfile);    // 查找下一文件
@@ -211,7 +211,7 @@ void CYuvTransform::OnBnClickedBSplit()
         m_cOutputFile.Open(m_strOutputFile.GetBuffer(), CFile::modeWrite|CFile::modeCreate);
 
         Read(m_nCurrentFrame);
-        m_cOutputFile.Write(m_pbYuvData, m_iYuvSize);
+        m_cOutputFile.Write(m_pbYuvData, m_nYuvSize);
         m_cOutputFile.Close();
         
         strTemp.Format(_T("split to %s finish."), m_strOutputFile);
@@ -266,7 +266,7 @@ void CYuvTransform::OnBnClickedBTransform()
             return;
         }
 
-        m_cOutputFile.Write(m_pbOutputData, m_iOutputSize);
+        m_cOutputFile.Write(m_pbOutputData, m_nOutputSize);
 
         m_nCurrentFrame++;
     }
@@ -361,7 +361,7 @@ INT CYuvTransform::Malloc()
     case FMT_YV12:
     case FMT_NV12:
     case FMT_NV21:
-        m_iYuvSize = m_nWidth * m_nHeight * 3 / 2;
+        m_nYuvSize = m_nWidth * m_nHeight * 3 / 2;
         break;
     case FMT_YUV422:
     case FMT_YV16:
@@ -371,20 +371,20 @@ INT CYuvTransform::Malloc()
     case FMT_VYUY:
     case FMT_NV16:
     case FMT_NV61:
-        m_iYuvSize = m_nWidth * m_nHeight * 2;
+        m_nYuvSize = m_nWidth * m_nHeight * 2;
         break;
     case FMT_YUV444:
-        m_iYuvSize = m_nWidth * m_nHeight * 3;
+        m_nYuvSize = m_nWidth * m_nHeight * 3;
         break;
     case FMT_Y:
-        m_iYuvSize = m_nWidth * m_nHeight;
+        m_nYuvSize = m_nWidth * m_nHeight;
         break;
     default:
         return -1;
         break;
     }
 
-    m_iOutputSize = m_iYuvSize;
+    m_nOutputSize = m_nYuvSize;
 
     if (m_pbYuvData != NULL)
     {
@@ -398,20 +398,20 @@ INT CYuvTransform::Malloc()
         m_pbOutputData = NULL;
     }
 
-    m_pbYuvData = new char[m_iYuvSize];
-    m_pbOutputData  = new char[m_iOutputSize];
+    m_pbYuvData = new char[m_nYuvSize];
+    m_pbOutputData  = new char[m_nOutputSize];
 
     m_nCurrentFrame = 0;
     if (CFile::hFileNull != m_cFile.m_hFile)
-        m_nTotalFrame = (UINT)(m_cFile.GetLength() / m_iYuvSize);
+        m_nTotalFrame = (UINT)(m_cFile.GetLength() / m_nYuvSize);
 
     return 0;
 }
 
 void CYuvTransform::Read(INT nCurrentFrame)
 {
-    m_cFile.Seek(m_iYuvSize * (nCurrentFrame), SEEK_SET);
-    m_cFile.Read(m_pbYuvData, m_iYuvSize);
+    m_cFile.Seek(m_nYuvSize * (nCurrentFrame), SEEK_SET);
+    m_cFile.Read(m_pbYuvData, m_nYuvSize);
 }
 
 INT CYuvTransform::Write(INT nAppend)
@@ -429,7 +429,7 @@ INT CYuvTransform::Write(INT nAppend)
         m_strOutputFile.Format(_T("./out/%s_%s_%d.%s"), m_strFileTittle, strTemp.GetBuffer(), m_nCurrentFrame, m_strFileExtern);
 
     m_cOutputFile.Open(m_strOutputFile.GetBuffer(), CFile::modeWrite|CFile::modeCreate | CFile::modeNoTruncate);
-    m_cOutputFile.Write(m_pbOutputData, m_iOutputSize);
+    m_cOutputFile.Write(m_pbOutputData, m_nOutputSize);
     m_cOutputFile.Close();
 
     return 0;

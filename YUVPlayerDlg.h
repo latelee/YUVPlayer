@@ -48,8 +48,8 @@ public:
     CString m_strPathName;  // 文件名称(包括路径)
     char*   m_pbYuvData;    // YUV数据
     char*   m_pbBmpData;    // RGB数据
-    UINT    m_iYuvSize; // 一幅图像大小
-    UINT    m_iBmpSize; // BMP图的大小
+    UINT    m_nYuvSize; // 一幅图像大小
+    UINT    m_nBmpSize; // BMP图的大小
 
     BITMAPFILEHEADER m_bmHeader;
     BITMAPINFO       m_bmInfo;

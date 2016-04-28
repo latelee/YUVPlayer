@@ -78,6 +78,8 @@ typedef enum
     FMT_NV21 = 11,
     FMT_NV16 = 12,
     FMT_NV61 = 13,
+    FMT_RGB24 = 14,
+    FMT_BGR24 = 15,
 }YUV_TYPE;
 
 /** 

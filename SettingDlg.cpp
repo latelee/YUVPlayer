@@ -39,6 +39,8 @@ void find_resolution(char* filename, int& fmt_idx, int& width, int& height)
         "nv21",
         "nv16",
         "nv61",
+        "rgb",
+        "bgr",
         "yuv420sp",
         "yuv422sp",
     };
@@ -90,8 +92,9 @@ void find_resolution(char* filename, int& fmt_idx, int& width, int& height)
     }
     str_debug("second string:%s \n", c_file);
     if (idx == 0 && pos != 1) idx = -1;
-    if (idx == 13) idx = 9;
-    if (idx == 14) idx = 11;
+    // 处理sp字符串
+    if (idx == 15) idx = 9;
+    if (idx == 16) idx = 11;
     // 这里打印的是最大匹配的
     if (idx != -1)
         str_debug("fmt(externsion)[%d]: %s(=%s)\n", idx, c_fmt, fmt_str[idx]);    
@@ -107,14 +110,14 @@ void find_resolution(char* filename, int& fmt_idx, int& width, int& height)
             fmt_idx = i;
         }
     }
-    if (fmt_idx == 13) fmt_idx = 9;
-    if (fmt_idx == 14) fmt_idx = 11;
+    if (fmt_idx == 15) fmt_idx = 9;
+    if (fmt_idx == 16) fmt_idx = 11;
     // 这里打印的是最大匹配的
-    if (fmt_idx != -1)
+    if (fmt_idx != -2)
         str_debug("fmt[%d]: %s(=%s)\n", fmt_idx, c_fmt, fmt_str[fmt_idx]);
 
-    if (idx != -1 && fmt_idx == -1) fmt_idx = idx;
-    if (fmt_idx != -1)
+    if (idx != -1 && fmt_idx == -2) fmt_idx = idx;
+    if (fmt_idx != -2)
         str_debug("---final fmt[%d]: %s(=%s)---\n", fmt_idx, c_fmt, fmt_str[fmt_idx]);
 
     fmt_idx+=1;

@@ -22,8 +22,8 @@ private:
     int     m_nOutputFormat;
     char*   m_pbYuvData;    // YUV数据
     char*   m_pbOutputData;    // RGB数据
-    UINT    m_iYuvSize; // 一幅图像大小
-    UINT    m_iOutputSize; // BMP图的大小
+    UINT    m_nYuvSize; // 一幅图像大小
+    UINT    m_nOutputSize; // BMP图的大小
     INT     m_nTotalFrame;
     INT     m_nCurrentFrame;
 

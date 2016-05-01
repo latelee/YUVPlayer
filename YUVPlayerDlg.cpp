@@ -516,7 +516,7 @@ void CYUVPlayerDlg::OnBnClickedButtonOpen()
 void CYUVPlayerDlg::OnBnClickedButtonSave()
 {
     // 默认yuv
-    wchar_t szFilter[128] = _T("YUV Files(*.%s)|*.%s|BMP(*.bmp)|*.bmp||");
+    wchar_t szFilter[128] = {0};//_T("YUV Files(*.%s)|*.%s|BMP(*.bmp)|*.bmp|RGB(*.rgb)|*.rgb||");
 
     CFile cFile;
     CString strFile;
@@ -534,11 +534,8 @@ void CYUVPlayerDlg::OnBnClickedButtonSave()
 
     // 找文件名
     _wsplitpath(m_strPathName, NULL, NULL, szFileName, szExt);
-    if (wcscmp(szExt, _T("yuv")))
-    {
-        swprintf_s(szFilter, _T("YUV Files(*.%s)|*.%s|BMP(*.bmp)|*.bmp||"), &szExt[1], &szExt[1]);
-        pExt = &szExt[1];
-    }
+    swprintf_s(szFilter, _T("YUV Files(*.%s)|*.%s|BMP(*.bmp)|*.bmp|RGB(*.rgb)|*.rgb||"), &szExt[1], &szExt[1]);
+    pExt = &szExt[1];
 
     strFile.Format(_T("%s_%d.%s"), szFileName, m_nCurrentFrame, pExt);
 
@@ -550,14 +547,30 @@ void CYUVPlayerDlg::OnBnClickedButtonSave()
     CString strTemp = fileDlg.GetFileExt();
     if (!strTemp.Compare(_T("bmp")))
     {
-        pExt = _T("bmp");
+        //pExt = _T("bmp");
         pData = m_pbBmpData;
         nSize = m_nBmpSize;
+    }
+    unsigned char* pRgbData = NULL;
+    if (!strTemp.Compare(_T("rgb")))
+    {
+        //pExt = _T("bmp");
+        nSize = m_nBmpSize - 54;
+        pRgbData = new unsigned char[nSize];
+        memcpy(pRgbData, m_pbBmpData+54, nSize);
+        swaprgb(pRgbData, nSize);
+        pData = (char*)pRgbData;
     }
 
     cFile.Open(fileDlg.GetPathName(), CFile::modeWrite|CFile::modeCreate);
     cFile.Write(pData, nSize);
     cFile.Close();
+
+    if (pRgbData != NULL)
+    {
+        delete pRgbData;
+        pRgbData = NULL;
+    }
 }
 
 

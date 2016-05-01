@@ -1582,11 +1582,15 @@ void yuv_to_rgb24_1(unsigned char* yuv, unsigned char* rgb, int width, int heigh
 void swaprgb(unsigned char* rgb, int len)
 {
     BYTE tmp = 0;
-    for (int i = 0; i < len; i += 3)
+    for (int i = 0; i < len; i += 6)
     {
         tmp = rgb[i];
         rgb[i] = rgb[i + 2];
         rgb[i + 2] = tmp;
+
+        tmp = rgb[i+3];
+        rgb[i+3] = rgb[i + 5];
+        rgb[i + 5] = tmp;
     }
 }
 

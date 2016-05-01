@@ -21,7 +21,8 @@ VS2010 MFC工程，源码有部分参考Yuvviewer代码，界面参考YUV Player Deluxe风格。
     * YUV444格式：YUV444;
     * YUV422交织格式：YUY2(YUYV);YVYU;UYVY;VYUY;
     * YUV420半平面格式：NV12(YUV420SP);NV21;
-    * YUV422半平面格式：NV16(YUV422SP);NV61
+    * YUV422半平面格式：NV16(YUV422SP);NV61;
+    * RGB24、BGR24格式
 
 用法
 =======================
@@ -46,6 +47,7 @@ VS2010 MFC工程，源码有部分参考Yuvviewer代码，界面参考YUV Player Deluxe风格。
 * v2.0 具备播放器基本功能。未添加参数保存功能。
 * v4.0 具备播放器基本功能。具备参数保存功能(在Setting界面点击Apply或OK才可生效)，支持添加自定义分辨率。
 * v4.1 bug fix。
+* v4.2 添加rgb(24位)文件播放、保存功能。
 
 作者主页
 =======================

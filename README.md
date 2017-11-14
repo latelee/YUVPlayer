@@ -1,54 +1,119 @@
-YUV Player -- YUV²¥·ÅÆ÷
-=======================
+# YUV Player -- A YUV player based on MFC
+## Project
+VS2010 MFC project, ref YUV Player Deluxe.
 
-¹¤³ÌËµÃ÷
-=======================
-VS2010 MFC¹¤³Ì£¬Ô´ÂëÓĞ²¿·Ö²Î¿¼Yuvviewer´úÂë£¬½çÃæ²Î¿¼YUV Player Deluxe·ç¸ñ¡£
+## Project Feature
+* support different YUV format.
+* support common resolution, support custom width&height, and can add to the system.
+* support different rate, loop play.
+* support play frame by frame, jump to first frame and last frame.
+* window scale.
+* support save to yuv file and bmp file.
+* support yuv format:
+  * y, ie: YUV400.
+  * YUV420 planar, ie: YUV420(I420), YV12.
+  * YUV422 planar, ie: YUV422(I422), YV16.
+  * YUV444 planar, ie: YUV444.
+  * YUV422 interleaved, ie: YUY2(YUYV), YVYU, UYVY, VYUY.
+  * YUV420 semi-planar, ie: NV12(YUV420SP), NV21.
+  * YUV420 semi-planar, ie: NV16(YUV422SP), NV61.
+  * RGB24, BGR24.
 
-¹¦ÄÜ
-=======================
-* ¿É²¥·Å¸÷ÖÖ¸ñÊ½µÄYUVÎÄ¼ş¡£
-* Ä¬ÈÏÔ¤Áô³£¼û·Ö±æÂÊ£¬Í¬Ê±Ö§³Ö×Ô¶¨Òå¸ß¿í£¬¿ÉÌí¼ÓÖÁÏµÍ³¡£
-* Ö§³Ö²»Í¬Ö¡ÂÊ²¥·Å£¬Ö§³ÖÑ­»·²¥·Å¡£
-* Ö§³ÖÇ°ºóÖğÖ¡Ìø×ª£»Ö§³ÖÌø×ªÊ×Ö¡¡¢Î²Ö¡¡£
-* Ö§³Ö´°¿ÚËõ·Å¡£
-* Ö§³Ö±£´æYUVÎÄ¼ş»òBMPÍ¼Æ¬ÎÄ¼ş¡£
-* ×Ô¶¯½âÎöÎÄ¼şÃû£¬µÃµ½·Ö±æÂÊ¡¢YUV¸ñÊ½¡£
-* Ä¿Ç°Ö§³Ö¸ñÊ½ÓĞ£º
-    * YÁÁ¶È·ÖÁ¿£º¼´YUV400;
-    * YUV420Æ½Ãæ¸ñÊ½£ºYUV420(I420);YV12;
-    * YYUV422Æ½Ãæ¸ñÊ½£ºUV422(I422);YV16;
-    * YUV444¸ñÊ½£ºYUV444;
-    * YUV422½»Ö¯¸ñÊ½£ºYUY2(YUYV);YVYU;UYVY;VYUY;
-    * YUV420°ëÆ½Ãæ¸ñÊ½£ºNV12(YUV420SP);NV21;
-    * YUV422°ëÆ½Ãæ¸ñÊ½£ºNV16(YUV422SP);NV61;
-    * RGB24¡¢BGR24¸ñÊ½
+## Usage
+Click menu File->Open option, or drag file to the main window, <br>
 
-ÓÃ·¨
-=======================
-ÓÒ¼üOpenÑ¡Ïî£»²Ëµ¥File->OpenÑ¡Ïî£»Ö±½ÓÍÏÒ·ÎÄ¼ş²¥·ÅÆ÷½çÃæ¡£
-
-½çÃæ
-=======================
-²ÎÊıÉèÖÃ½çÃæ£º<br>
+## Window view
+Setting window: <br>
 ![Setting](https://github.com/latelee/YUVPlayer/blob/master/screenshots/yuvplayer_setting.png)
 
-¹ØÓÚ½çÃæ£º<br>
+About windows: <br>
 ![About](https://github.com/latelee/YUVPlayer/blob/master/screenshots/yuvplayer_about.png)
+  
+## Changelog
+The binary file will locate in release directory. <br>
+* v1.0 first version, can play different yuv format. <br>
+* v2.0 impletement basic function for a player.<br>
+* v4.0 save parameter(Setting->Apply or OK). 
+* v4.1 fix some bug.
+* v4.2 add play and save for rgb(24 bit) file
 
-ÉùÃ÷
-=======================
-±¾³ÌĞò½öÏŞÓÚÑ§Ï°½»Á÷¡£<br>
-³ÌĞòËùÓÃ²¿·Ö´úÂëÎªÍøÂçÉÏ¿ÉËÑË÷µ½µÄÆ¬¶Î¡£
-    
-°æ±¾
-=======================
-* v1.0 ÁÙÊ±°æ±¾£¬Ö§³Ö¸÷Àà¸ñÊ½µÄ²¥·Å£¬¿ÉÓÃ°æ±¾£¬³õ¾ß³ûĞÎ¡£
-* v2.0 ¾ß±¸²¥·ÅÆ÷»ù±¾¹¦ÄÜ¡£Î´Ìí¼Ó²ÎÊı±£´æ¹¦ÄÜ¡£
-* v4.0 ¾ß±¸²¥·ÅÆ÷»ù±¾¹¦ÄÜ¡£¾ß±¸²ÎÊı±£´æ¹¦ÄÜ(ÔÚSetting½çÃæµã»÷Apply»òOK²Å¿ÉÉúĞ§)£¬Ö§³ÖÌí¼Ó×Ô¶¨Òå·Ö±æÂÊ¡£
-* v4.1 bug fix¡£
-* v4.2 Ìí¼Órgb(24Î»)ÎÄ¼ş²¥·Å¡¢±£´æ¹¦ÄÜ¡£
+## Testing
+Only test under Windows 7 64bit OS, and may run on other Windows OS.<br>
 
-×÷ÕßÖ÷Ò³
-=======================
-[³ÙË¼ÌÃ¹¤×÷ÊÒ](http://www.latelee.org)
+## Some bug
+Not found yet.
+
+## Protocol
+* Copyright [CST studio Late Lee](http://www.latelee.org)
+* Total code is BSP.
+* You can use the code for study, and commercial purposes, but give no guarantee.
+
+## TODOs
+* split yuv file for Y, U, V.
+* support different yuv format transformation. 
+
+## Author
+CST studio Late Lee<br>
+[CST studio](http://www.latelee.org) <br>
+[Donate the author](http://www.latelee.org/donate)
+
+# YUV Player -- åŸºäºMFCç•Œé¢çš„YUVæ’­æ”¾å™¨
+
+## å·¥ç¨‹è¯´æ˜
+VS2010 MFCå·¥ç¨‹ï¼Œç•Œé¢å‚è€ƒYUV Player Deluxeé£æ ¼ã€‚
+
+## åŠŸèƒ½
+* å¯æ’­æ”¾å„ç§æ ¼å¼çš„YUVæ–‡ä»¶ã€‚
+* é»˜è®¤é¢„ç•™å¸¸è§åˆ†è¾¨ç‡ï¼ŒåŒæ—¶æ”¯æŒè‡ªå®šä¹‰é«˜å®½ï¼Œå¯æ·»åŠ è‡³ç³»ç»Ÿã€‚
+* æ”¯æŒä¸åŒå¸§ç‡æ’­æ”¾ï¼Œæ”¯æŒå¾ªç¯æ’­æ”¾ã€‚
+* æ”¯æŒå‰åé€å¸§è·³è½¬ï¼›æ”¯æŒè·³è½¬é¦–å¸§ã€å°¾å¸§ã€‚
+* æ”¯æŒçª—å£ç¼©æ”¾ã€‚
+* æ”¯æŒä¿å­˜YUVæ–‡ä»¶æˆ–BMPå›¾ç‰‡æ–‡ä»¶ã€‚
+* è‡ªåŠ¨è§£ææ–‡ä»¶åï¼Œå¾—åˆ°åˆ†è¾¨ç‡ã€YUVæ ¼å¼ã€‚
+* ç›®å‰æ”¯æŒæ ¼å¼æœ‰ï¼š
+    * Yäº®åº¦åˆ†é‡ï¼šå³YUV400;
+    * YUV420å¹³é¢æ ¼å¼ï¼šYUV420(I420);YV12;
+    * YYUV422å¹³é¢æ ¼å¼ï¼šYUV422(I422);YV16;
+    * YUV444æ ¼å¼ï¼šYUV444;
+    * YUV422äº¤ç»‡æ ¼å¼ï¼šYUY2(YUYV);YVYU;UYVY;VYUY;
+    * YUV420åŠå¹³é¢æ ¼å¼ï¼šNV12(YUV420SP);NV21;
+    * YUV422åŠå¹³é¢æ ¼å¼ï¼šNV16(YUV422SP);NV61;
+    * RGB24ã€BGR24æ ¼å¼
+
+## ç”¨æ³•
+å³é”®Opené€‰é¡¹ï¼›èœå•File->Opené€‰é¡¹ï¼›ç›´æ¥æ‹–æ›³æ–‡ä»¶æ’­æ”¾å™¨ç•Œé¢ã€‚
+
+## ç•Œé¢
+å‚æ•°è®¾ç½®ç•Œé¢ï¼š<br>
+![Setting](https://github.com/latelee/YUVPlayer/blob/master/screenshots/yuvplayer_setting.png)
+
+å…³äºç•Œé¢ï¼š<br>
+![About](https://github.com/latelee/YUVPlayer/blob/master/screenshots/yuvplayer_about.png)
+  
+## ç‰ˆæœ¬å˜æ›´
+ç¼–è¯‘å¥½çš„å·¥å…·ä½äºreleaseç›®å½•ä¸­ã€‚<br>
+* v1.0 ä¸´æ—¶ç‰ˆæœ¬ï¼Œæ”¯æŒå„ç±»æ ¼å¼çš„æ’­æ”¾ï¼Œå¯ç”¨ç‰ˆæœ¬ï¼Œåˆå…·é›å½¢ã€‚
+* v2.0 å…·å¤‡æ’­æ”¾å™¨åŸºæœ¬åŠŸèƒ½ã€‚æœªæ·»åŠ å‚æ•°ä¿å­˜åŠŸèƒ½ã€‚
+* v4.0 å…·å¤‡æ’­æ”¾å™¨åŸºæœ¬åŠŸèƒ½ã€‚å…·å¤‡å‚æ•°ä¿å­˜åŠŸèƒ½(åœ¨Settingç•Œé¢ç‚¹å‡»Applyæˆ–OKæ‰å¯ç”Ÿæ•ˆ)ï¼Œæ”¯æŒæ·»åŠ è‡ªå®šä¹‰åˆ†è¾¨ç‡ã€‚
+* v4.1 bug fixã€‚
+* v4.2 æ·»åŠ rgb(24ä½)æ–‡ä»¶æ’­æ”¾ã€ä¿å­˜åŠŸèƒ½ã€‚
+
+## æµ‹è¯•
+æœ¬å·¥å…·ä»…åœ¨Windows 7 64bitæ“ä½œç³»ç»Ÿä¸­è¿è¡Œæµ‹è¯•é€šè¿‡ã€‚ä½†ç†è®ºä¸Šåº”è¯¥å¯ä»¥åœ¨å…¶å®ƒWindowsç³»åˆ—ç³»ç»Ÿä¸Šè¿è¡Œã€‚<br>
+
+## å¯èƒ½æ½œåœ¨é—®é¢˜
+æš‚æ— å‘ç°ã€‚
+
+## åè®®
+* ç‰ˆæƒæ‰€æœ‰ [è¿Ÿæ€å ‚å·¥ä½œå®¤ æè¿Ÿ](http://www.latelee.org)
+* æœ¬å·¥ç¨‹æºç ä½¿ç”¨åè®®ï¼šBSPã€‚
+* å¯ç”¨äºå­¦ä¹ ç ”ç©¶ä¹‹ç›®çš„ï¼Œä¹Ÿå¯ç”¨äºå•†ä¸šç›®çš„ï¼Œä½†æ— ä¹‰åŠ¡ä¿è¯ç¨‹åºåŠŸèƒ½å®Œå…¨å¯é ã€‚
+
+## å¾…å®Œå–„åŠŸèƒ½
+* æ·»åŠ YUVåˆ†é‡åˆ†ç¦»åŠŸèƒ½ã€‚
+* å¤šç§YUVæ ¼å¼ç›¸äº’è½¬æ¢åŠŸèƒ½ã€‚
+
+## ä½œè€…
+æ€å ‚å·¥ä½œå®¤ æè¿Ÿ<br>
+[è¿Ÿæ€å ‚å·¥ä½œå®¤](http://www.latelee.org) <br>
+[æ¬¢è¿æèµ æ”¯æŒä½œè€…](http://www.latelee.org/donate)

@@ -55,7 +55,8 @@ Not found yet.
 ## Author
 CST studio Late Lee<br>
 [CST studio](http://www.latelee.org) <br>
-[Donate the author](http://www.latelee.org/donate)
+Donate the author <br>
+![Donate](https://github.com/latelee/YUVPlayer/blob/master/screenshots/latelee_pay_small.png)
 
 # YUV Player -- 基于MFC界面的YUV播放器
 
@@ -107,7 +108,7 @@ VS2010 MFC工程，界面参考YUV Player Deluxe风格。
 ## 协议
 * 版权所有 [迟思堂工作室 李迟](http://www.latelee.org)
 * 本工程源码使用协议：BSP。
-* 可用于学习研究之目的，也可用于商业目的，但无义务保证程序功能完全可靠。
+* 本软件可用于包括但不限于学习、研究、商业，但随之而来的成果/后果与软件作者无关。
 
 ## 待完善功能
 * 添加YUV分量分离功能。
@@ -116,4 +117,6 @@ VS2010 MFC工程，界面参考YUV Player Deluxe风格。
 ## 作者
 思堂工作室 李迟<br>
 [迟思堂工作室](http://www.latelee.org) <br>
-[欢迎捐赠支持作者](http://www.latelee.org/donate)
+如果觉得本软件不错，欢迎捐赠支持作者 <br>
+![捐赠](https://github.com/latelee/YUVPlayer/blob/master/screenshots/latelee_pay_small.png)
+

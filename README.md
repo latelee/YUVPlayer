@@ -1,4 +1,10 @@
 # YUV Player -- A YUV player based on MFC
+
+[![GitHub stars](https://img.shields.io/github/stars/latelee/YUVPlayer.svg)](https://github.com/latelee/YUVPlayer)[![GitHub forks](https://img.shields.io/github/forks/latelee/YUVPlayer.svg)](https://github.com/latelee/YUVPlayer)
+
+Stargazers over time  
+[![Stargazers over time](https://starcharts.herokuapp.com/latelee/YUVPlayer.svg)](https://starcharts.herokuapp.com/latelee/YUVPlayer)
+
 ## Project
 VS2010 MFC project, ref YUV Player Deluxe.
 
